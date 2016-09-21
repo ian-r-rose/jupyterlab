@@ -31,6 +31,8 @@ Distributed under the terms of the Modified BSD License.
   <script type="text/javascript" src="{{mathjax_url}}?config={{mathjax_config}}&amp;delayStartupUntil=configured" charset="utf-8"></script>
   {% endif %}
 
+  <script src="https://apis.google.com/js/api.js"></script>
+
 </head>
 
 <body>
@@ -44,7 +46,7 @@ Distributed under the terms of the Modified BSD License.
   {% endfor %}
 
   lab.registerPlugins(plugins);
-  lab.start();
+  window.gapi.load('auth:client,drive-realtime,drive-share', function(){ lab.start(); } );
 </script>
 
 </body>

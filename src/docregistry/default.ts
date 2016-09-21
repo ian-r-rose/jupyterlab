@@ -132,6 +132,7 @@ class DocumentModel implements IDocumentModel {
       return;
     }
     this._text = value;
+    this._collaborativeString.setText(value);
     this.contentChanged.emit(void 0);
     this.dirty = true;
   }
@@ -153,11 +154,29 @@ class DocumentModel implements IDocumentModel {
     this.fromString(JSON.parse(value));
   }
 
+  /**
+   * Register for collaborative string usage.
+   */
+  registerCollaborative( collaborativeString: gapi.drive.realtime.CollaborativeString): void {
+    this._collaborativeString = collaborativeString;
+    this.fromString(this._collaborativeString.getText());
+    this._collaborativeString.addEventListener(gapi.drive.realtime.EventType.TEXT_INSERTED,
+                                               (evt : any) => {
+                                                 this.fromString(this._collaborativeString.getText());
+                                               });
+    this._collaborativeString.addEventListener(gapi.drive.realtime.EventType.TEXT_DELETED,
+                                               (evt : any) => {
+                                                 this.fromString(this._collaborativeString.getText());
+                                               });
+
+  }
+
   private _text = '';
   private _defaultLang = '';
   private _dirty = false;
   private _readOnly = false;
   private _isDisposed = false;
+  private _collaborativeString : gapi.drive.realtime.CollaborativeString = null;
 }
 
 // Define the signals for the `DocumentModel` class.
@@ -170,6 +189,16 @@ defineSignal(DocumentModel.prototype, 'stateChanged');
  */
 export
 class TextModelFactory implements IModelFactory<IDocumentModel> {
+  /**
+   * Constructor for TextModelFactory.
+   * This currently just sets up a collaborative model.
+   */
+  constructor() {
+    this._doc = gapi.drive.realtime.newInMemoryDocument();
+    this._model = this._doc.getModel();
+    this._collaborativeString = this._model.createString();
+  }
+
   /**
    * The name of the model type.
    *
@@ -221,7 +250,9 @@ class TextModelFactory implements IModelFactory<IDocumentModel> {
    * @returns A new document model.
    */
   createNew(languagePreference?: string): IDocumentModel {
-    return new DocumentModel(languagePreference);
+    let docModel = new DocumentModel(languagePreference);
+    docModel.registerCollaborative(this._collaborativeString);
+    return docModel;
   }
 
   /**
@@ -235,6 +266,9 @@ class TextModelFactory implements IModelFactory<IDocumentModel> {
   }
 
   private _isDisposed = false;
+  private _doc: gapi.drive.realtime.Document = null;
+  private _model : gapi.drive.realtime.Model = null;
+  private _collaborativeString : gapi.drive.realtime.CollaborativeString = null;
 }
 
 
