@@ -5,8 +5,6 @@ const CLIENT_ID = '625147942732-t30t8vnn43fl5mvg1qde5pl84603dr6s.apps.googleuser
 const FILES_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const METADATA_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.readonly.metadata';
 
-export function logger () : void {console.log("What is going on");}
-
 export function authorize () : void {
   let clientId = CLIENT_ID;
   let _this = this;
