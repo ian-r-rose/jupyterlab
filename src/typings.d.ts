@@ -11,4 +11,5 @@
 /// <reference path="../typings/require/require.d.ts"/>
 /// <reference path="../typings/sanitize-html/sanitize-html.d.ts"/>
 /// <reference path="../typings/xterm/xterm.d.ts"/>
-/// <reference path="../typings/realtime/realtime.d.ts"/>
+/// <reference path="../typings/google/realtime.d.ts"/>
+/// <reference path="../typings/google/gapi.d.ts"/>

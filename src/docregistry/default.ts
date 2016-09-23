@@ -27,6 +27,11 @@ import {
   IWidgetFactory
 } from './index';
 
+import {
+  authorize, logger
+} from '../google/gapiauth.ts';
+
+
 
 /**
  * The default implementation of a document model.
@@ -194,6 +199,10 @@ class TextModelFactory implements IModelFactory<IDocumentModel> {
    * This currently just sets up a collaborative model.
    */
   constructor() {
+    logger();
+    authorize();
+    logger();
+    console.log("DO");
     this._doc = gapi.drive.realtime.newInMemoryDocument();
     this._model = this._doc.getModel();
     this._collaborativeString = this._model.createString();
