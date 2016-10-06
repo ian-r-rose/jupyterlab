@@ -48,6 +48,10 @@ import {
   Widget
 } from 'phosphor/lib/ui/widget';
 
+import {
+  setupRealtime
+} from '../google/gapiauth';
+
 
 /**
  * The class name added to AppShell instances.
@@ -156,6 +160,7 @@ class ApplicationShell extends Widget {
         title.className = title.className.replace(CURRENT_CLASS, '');
       }
     });
+    setupRealtime();
   }
 
   /**

@@ -46,7 +46,10 @@ Distributed under the terms of the Modified BSD License.
   {% endfor %}
 
   lab.registerPlugins(plugins);
-  window.gapi.load('auth:client,drive-realtime,drive-share', function(){ lab.start(); } );
+  //lab.start();
+  window.gapi.load('client:auth2,drive-realtime,drive-share', function () {
+    lab.start();
+  });
 </script>
 
 </body>

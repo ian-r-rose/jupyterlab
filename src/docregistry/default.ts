@@ -28,9 +28,10 @@ import {
 } from './index';
 
 import {
-  authorize
+  realtimeDoc, realtimeModel, collaborativeString
 } from '../google/gapiauth';
 
+declare let gapi : any;
 
 
 /**
@@ -162,7 +163,7 @@ class DocumentModel implements IDocumentModel {
   /**
    * Register for collaborative string usage.
    */
-  registerCollaborative( collaborativeString: gapi.drive.realtime.CollaborativeString): void {
+  registerCollaborative( collabString: gapi.drive.realtime.CollaborativeString): void {
     this._collaborativeString = collaborativeString;
     this.fromString(this._collaborativeString.getText());
     this._collaborativeString.addEventListener(gapi.drive.realtime.EventType.TEXT_INSERTED,
@@ -199,10 +200,16 @@ class TextModelFactory implements IModelFactory<IDocumentModel> {
    * This currently just sets up a collaborative model.
    */
   constructor() {
-    authorize();
-    this._doc = gapi.drive.realtime.newInMemoryDocument();
-    this._model = this._doc.getModel();
-    this._collaborativeString = this._model.createString();
+    let _this = this;
+
+    //_this._doc = gapi.drive.realtime.newInMemoryDocument();
+    //debugger;
+    //_this._doc = realtime_doc;
+    //_this._model = _this._doc.getModel();
+    //_this._collaborativeString = _this._model.createString();
+    _this._doc = realtimeDoc;
+    _this._model = realtimeModel;
+    _this._collaborativeString = collaborativeString;
   }
 
   /**

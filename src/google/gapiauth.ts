@@ -1,26 +1,79 @@
 // Copyright (c) Jupyter Development Team.
+//
 // Distributed under the terms of the Modified BSD License.
 
+declare let gapi : any;
+
+declare let rtclient : any;
+
+export let gapi_loaded : boolean = true;
+export let realtimeDoc : gapi.drive.realtime.Document = null;
+export let realtimeModel : any  = null;
+export let collaborativeString : any = null;
+
 const CLIENT_ID = '625147942732-t30t8vnn43fl5mvg1qde5pl84603dr6s.apps.googleusercontent.com';
+
 const FILES_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-const METADATA_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.readonly.metadata';
+const METADATA_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.metadata';
+const INSTALL_SCOPE = 'https://www.googleapis.com/auth/drive.install'
 
-export function authorize () : void {
-  let clientId = CLIENT_ID;
-  let _this = this;
+const RT_MIMETYPE = 'application/vnd.google-apps.drive-sdk';
 
-  let handleAuthResult = function (token : any) : void {console.log(token)};
 
-  console.log("Authorizing")
+export function setupRealtime () : void {
+
   gapi.auth.authorize({
-    client_id: clientId,
-    scope: [
-      FILES_OAUTH_SCOPE,
-      METADATA_OAUTH_SCOPE
-    ],
-    immediate: true
-  }, handleAuthResult);
-  console.log("Authorizing done")
+       client_id: CLIENT_ID,
+          scope: [
+            FILES_OAUTH_SCOPE,
+            METADATA_OAUTH_SCOPE
+          ],
+          immediate: true
+        }, createOrLoadRealtimeFile);
 }
 
+function createOrLoadRealtimeFile() : void {
 
+  gapi.client.load('drive', 'v3').then( function() {
+    let query : string = (window as any).location.search;
+    if (query) {
+      let fileId : string = query.slice(1);
+      console.log("Attempting to load realtime file " + fileId);
+      loadRealtimeFile(fileId);
+    }
+    else {
+      createRealtimeFile();
+    }
+  });
+}
+
+function createRealtimeFile() : void {
+  gapi.client.drive.files.create({
+    'resource': {
+      mimeType: RT_MIMETYPE,
+      name: 'wakka'
+      }
+    }).then( (response : any) : any => {
+        console.log(JSON.parse(response.body).id);
+        let fileId : string = JSON.parse(response.body).id;
+        (window as any).location.href = '?' + fileId;
+        gapi.drive.realtime.load( fileId, (doc : any ):any => {
+          realtimeDoc = doc;
+          realtimeModel = doc.getModel();
+          collaborativeString = realtimeModel.createString("I am a collaborative string");
+          realtimeModel.getRoot().set("collabstring", collaborativeString);
+          console.log(collaborativeString.getText());
+          console.log("setup realtime document");
+        });
+      });
+}
+
+function loadRealtimeFile( fileId : string) : void {
+  gapi.drive.realtime.load( fileId, (doc : any ):any => {
+    realtimeDoc = doc;
+    realtimeModel = doc.getModel();
+    collaborativeString = realtimeModel.getRoot().get("collabstring");
+    console.log(collaborativeString.getText());
+    console.log("load realtime document");
+  });
+}
