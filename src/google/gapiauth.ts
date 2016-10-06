@@ -22,6 +22,26 @@ const RT_MIMETYPE = 'application/vnd.google-apps.drive-sdk';
 
 export function setupRealtime () : void {
 
+  let handleAuthorization = function (authResult : any) {
+    if (authResult && !authResult.error) {
+      createOrLoadRealtimeFile();
+    } else {
+      popupAuthorization();
+    }
+  }
+
+  let popupAuthorization = function() {
+    gapi.auth.authorize({
+         client_id: CLIENT_ID,
+            scope: [
+              FILES_OAUTH_SCOPE,
+              METADATA_OAUTH_SCOPE
+            ],
+            immediate: false
+          }, handleAuthorization);
+  }
+
+  //Attempt to authorize without a popup
   gapi.auth.authorize({
        client_id: CLIENT_ID,
           scope: [
@@ -29,7 +49,7 @@ export function setupRealtime () : void {
             METADATA_OAUTH_SCOPE
           ],
           immediate: true
-        }, createOrLoadRealtimeFile);
+        }, handleAuthorization);
 }
 
 function createOrLoadRealtimeFile() : void {
@@ -38,7 +58,6 @@ function createOrLoadRealtimeFile() : void {
     let query : string = (window as any).location.search;
     if (query) {
       let fileId : string = query.slice(1);
-      console.log("Attempting to load realtime file " + fileId);
       loadRealtimeFile(fileId);
     }
     else {
@@ -54,26 +73,23 @@ function createRealtimeFile() : void {
       name: 'wakka'
       }
     }).then( (response : any) : any => {
-        console.log(JSON.parse(response.body).id);
         let fileId : string = JSON.parse(response.body).id;
-        (window as any).location.href = '?' + fileId;
         gapi.drive.realtime.load( fileId, (doc : any ):any => {
           realtimeDoc = doc;
           realtimeModel = doc.getModel();
           collaborativeString = realtimeModel.createString("I am a collaborative string");
           realtimeModel.getRoot().set("collabstring", collaborativeString);
-          console.log(collaborativeString.getText());
-          console.log("setup realtime document");
+          console.log("setup realtime document "+fileId);
         });
       });
 }
 
 function loadRealtimeFile( fileId : string) : void {
+  console.log("Attempting to load realtime file " + fileId);
   gapi.drive.realtime.load( fileId, (doc : any ):any => {
     realtimeDoc = doc;
     realtimeModel = doc.getModel();
     collaborativeString = realtimeModel.getRoot().get("collabstring");
-    console.log(collaborativeString.getText());
     console.log("load realtime document");
   });
 }
