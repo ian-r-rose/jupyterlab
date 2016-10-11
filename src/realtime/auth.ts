@@ -2,6 +2,10 @@
 //
 // Distributed under the terms of the Modified BSD License.
 
+import {
+  showDialog
+} from '../dialog';
+
 declare let gapi : any;
 
 export let realtimeDoc : gapi.drive.realtime.Document = null;
@@ -28,14 +32,21 @@ export function setupRealtime () : void {
   }
 
   let popupAuthorization = function() {
-    gapi.auth.authorize({
-         client_id: CLIENT_ID,
-            scope: [
-              FILES_OAUTH_SCOPE,
-              METADATA_OAUTH_SCOPE
-            ],
-            immediate: false
-          }, handleAuthorization);
+    showDialog({
+      title: 'Proceed to Google Authorization?',
+      okText: 'OK'
+    }).then( result => {
+      if (result.text === 'OK') {
+        gapi.auth.authorize({
+          client_id: CLIENT_ID,
+          scope: [ FILES_OAUTH_SCOPE, METADATA_OAUTH_SCOPE],
+          immediate: false
+          },
+          handleAuthorization);
+      } else {
+        return;
+      }
+    });
   }
 
   //Attempt to authorize without a popup
@@ -63,22 +74,24 @@ function createOrLoadRealtimeFile() : void {
   });
 }
 
-function createRealtimeFile() : void {
+function createRealtimeFile() : string {
+  let fileId : string = '';
   gapi.client.drive.files.create({
     'resource': {
       mimeType: RT_MIMETYPE,
-      name: 'wakka'
+      name: 'jupyterlab_realtime_file'
       }
-    }).then( (response : any) : any => {
-        let fileId : string = JSON.parse(response.body).id;
-        gapi.drive.realtime.load( fileId, (doc : any ):any => {
-          realtimeDoc = doc;
-          realtimeModel = doc.getModel();
-          collaborativeString = realtimeModel.createString("I am a collaborative string");
-          realtimeModel.getRoot().set("collabstring", collaborativeString);
-          console.log("setup realtime document "+fileId);
-        });
-      });
+  }).then( (response : any) : any => {
+       fileId = JSON.parse(response.body).id;
+       gapi.drive.realtime.load( fileId, (doc : any ):any => {
+         realtimeDoc = doc;
+         realtimeModel = doc.getModel();
+         collaborativeString = realtimeModel.createString("I am a collaborative string");
+         realtimeModel.getRoot().set("collabstring", collaborativeString);
+         console.log("setup realtime document "+fileId);
+       });
+     });
+  return fileId;
 }
 
 function loadRealtimeFile( fileId : string) : void {
