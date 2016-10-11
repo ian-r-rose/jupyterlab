@@ -32,5 +32,6 @@ module.exports = [
   require('../../lib/services/plugin').plugin,
   require('../../lib/shortcuts/plugin').plugin,
   require('../../lib/statedb/plugin').plugin,
-  require('../../lib/terminal/plugin').plugin
+  require('../../lib/terminal/plugin').plugin,
+  require('../lib/realtime/plugin').realtimeExtension,
 ];
