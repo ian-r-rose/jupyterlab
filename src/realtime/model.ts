@@ -13,6 +13,10 @@ import {
   DocumentModel, TextModelFactory
 } from '../docregistry/default';
 
+import {
+  realtimeDoc, realtimeModel, collaborativeString
+} from './auth';
+
 declare let gapi : any;
 
 export 
@@ -21,7 +25,7 @@ class RealtimeDocumentModel extends DocumentModel {
     super(languagePreference);
   }
 
-  registerCollaborative( collaborativeString: gapi.drive.realtime.CollaborativeString): void {
+  registerCollaborative(): void {
     this._collaborativeString = collaborativeString;
     this.fromString(this._collaborativeString.getText());
     this._collaborativeString.addEventListener(gapi.drive.realtime.EventType.TEXT_INSERTED,
@@ -49,9 +53,9 @@ export
 class RealtimeTextModelFactory extends TextModelFactory {
   constructor() {
     super();
-    this._doc = gapi.drive.realtime.newInMemoryDocument();
-    this._model = this._doc.getModel();
-    this._collaborativeString = this._model.createString();
+    this._doc = realtimeDoc;
+    this._model = realtimeModel;
+    this._collaborativeString = collaborativeString;
   }
   /**
    * The name of the model type.
@@ -65,7 +69,7 @@ class RealtimeTextModelFactory extends TextModelFactory {
 
   createNew(languagePreference?: string) : RealtimeDocumentModel {
     let doc = new RealtimeDocumentModel(languagePreference);
-    doc.registerCollaborative(this._collaborativeString);
+    doc.registerCollaborative();
     return doc;
   }
 
