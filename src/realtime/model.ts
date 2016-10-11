@@ -77,7 +77,3 @@ class RealtimeTextModelFactory extends TextModelFactory {
   private _model : gapi.drive.realtime.Model = null;
   private _collaborativeString : gapi.drive.realtime.CollaborativeString = null;
 }
-
-// Define the signals for the `DocumentModel` class.
-defineSignal(RealtimeDocumentModel.prototype, 'contentChanged');
-defineSignal(RealtimeDocumentModel.prototype, 'stateChanged');
