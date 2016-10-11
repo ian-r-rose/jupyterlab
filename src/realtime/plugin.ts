@@ -18,6 +18,10 @@ import {
 } from './model';
 
 import {
+  setupRealtime
+} from './auth';
+
+import {
   EditorWidgetFactory, EditorWidget
 } from '../editorwidget';
 
@@ -81,4 +85,6 @@ function activateRealtime(app: JupyterLab, registry: IDocumentRegistry): void {
     name: 'Realtime Text File',
     fileType: 'realtime text',
   });
+
+  setupRealtime();
 }
