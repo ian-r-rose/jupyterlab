@@ -38,6 +38,9 @@ Distributed under the terms of the Modified BSD License.
   {% block meta %}
   {% endblock %}
 
+  <script src="https://apis.google.com/js/api.js"></script>
+
+
 </head>
 
 <body>
@@ -51,8 +54,13 @@ Distributed under the terms of the Modified BSD License.
   plugins = plugins.concat(jupyter.getEntryPoint("{{ plugin_entry }}"));
   {% endfor %}
 
-  lab.registerPlugins(plugins);
-  lab.start();
+  //lab.registerPlugins(plugins);
+  window.gapi.load('auth:client,drive-realtime,drive-share', function(){ 
+    lab.registerPlugins(plugins); 
+    lab.start();
+  });
+  //lab.start();
+
 </script>
 {% endblock %}
 
