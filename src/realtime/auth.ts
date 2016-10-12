@@ -54,3 +54,18 @@ export function setupRealtime () : void {
           immediate: true
         }, handleAuthorization);
 }
+
+export function createPermissions (fileId: string, emailAddress: string ) : void {
+    let permissionRequest = {
+      'type' : 'user',
+      'role' : 'writer',
+      'emailAddress': emailAddress
+    }
+    gapi.client.drive.permissions.create( {
+      'fileId': fileId,
+      'emailMessage' : '<a href=\"localhost:8888/lab?'+fileId+'\">Stop, collaborate, and listen.</a>',
+      'sendNotificationEmail' : true,
+      'resource': permissionRequest
+    }).then( (response : any) => {
+    });
+}

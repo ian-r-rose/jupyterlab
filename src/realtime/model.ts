@@ -2,10 +2,6 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  defineSignal, ISignal
-} from 'phosphor/lib/core/signaling';
-
-import {
   Contents
 } from 'jupyter-js-services';
 
@@ -51,7 +47,7 @@ class RealtimeDocumentModel extends DocumentModel {
       _this._realtimeDoc = doc;
       _this._realtimeModel = _this._realtimeDoc.getModel();
       _this._collaborativeString = 
-        _this._realtimeModel.getRoot().get("collabstring");
+        _this._realtimeModel.getRoot().get("collabString");
       _this.registerCollaborative();
     });
   }
@@ -71,7 +67,7 @@ class RealtimeDocumentModel extends DocumentModel {
            _this._collaborativeString = 
              _this._realtimeModel.createString("I am a collaborative string");
            _this._realtimeModel.getRoot()
-             .set("collabstring", _this._collaborativeString);
+             .set("collabString", _this._collaborativeString);
            console.log("setup realtime document "+_this._fileId);
            _this.registerCollaborative();
          });
@@ -90,6 +86,10 @@ class RealtimeDocumentModel extends DocumentModel {
         _this.createRealtimeFile();
       }
     });
+  }
+
+  get fileId() : string {
+    return this._fileId;
   }
 
   private _fileId : string = '';
@@ -116,5 +116,4 @@ class RealtimeTextModelFactory extends TextModelFactory {
     let doc = new RealtimeDocumentModel(languagePreference);
     return doc;
   }
-
 }

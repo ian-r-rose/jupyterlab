@@ -6,6 +6,10 @@ import {
 } from 'phosphor/lib/ui/focustracker';
 
 import {
+  Menu
+} from 'phosphor/lib/ui/menu';
+
+import {
   JupyterLab, JupyterLabPlugin
 } from '../application';
 
@@ -14,11 +18,15 @@ import {
 } from '../docregistry';
 
 import {
+  IMainMenu
+} from '../mainmenu';
+
+import {
   RealtimeDocumentModel, RealtimeTextModelFactory
 } from './model';
 
 import {
-  setupRealtime
+  setupRealtime, createPermissions
 } from './auth';
 
 import {
@@ -43,19 +51,23 @@ const EDITOR_ICON_CLASS = 'jp-ImageTextEditor';
  * The table file handler extension.
  */
 export
-const realtimeExtension: JupyterLabPlugin<void> = {
+const realtimeExtension: JupyterLabPlugin<IEditorTracker> = {
   id: 'jupyter.extensions.realtime',
-  requires: [IDocumentRegistry],
+  requires: [IDocumentRegistry, IMainMenu],
   activate: activateRealtime,
   provides: IEditorTracker,
   autoStart: true
 };
 
+const cmdIds = {
+  newRealtimeFile : 'realtime:create-new',
+  shareRealtimeFile : 'realtime:share'
+};
 
 /**
  * Activate the table widget extension.
  */
-function activateRealtime(app: JupyterLab, registry: IDocumentRegistry): void {
+function activateRealtime(app: JupyterLab, registry: IDocumentRegistry, mainMenu : IMainMenu): IEditorTracker {
 
   let widgetFactory = new EditorWidgetFactory();
   let tracker = new FocusTracker<EditorWidget>();
@@ -87,4 +99,45 @@ function activateRealtime(app: JupyterLab, registry: IDocumentRegistry): void {
   });
 
   setupRealtime();
+
+  mainMenu.addMenu(createMenu(app, tracker), {rank: 60});
+  let commands = app.commands;
+
+  commands.addCommand(cmdIds.newRealtimeFile, {
+    label: 'New Realtime Text File',
+    caption: 'Create a new realtime text file',
+    execute: () => { console.log("Hello.");} 
+  });
+
+  commands.addCommand(cmdIds.shareRealtimeFile, {
+    label: 'Share',
+    caption: 'Share this file through Google ID',
+    execute: ()=> {shareRealtimeDocument(tracker);}
+  });
+
+  return tracker;
+}
+
+
+function createMenu( app: JupyterLab, tracker: IEditorTracker ) : Menu {
+
+  let {commands, keymap} = app;
+  let menu = new Menu( {commands, keymap} )
+  menu.title.label = 'Realtime'
+
+  menu.addItem( {command: cmdIds.newRealtimeFile});
+  menu.addItem( {command: cmdIds.shareRealtimeFile});
+
+  return menu;
+}
+
+function shareRealtimeDocument(tracker : IEditorTracker) {
+  if (tracker.currentWidget) {
+    debugger;
+    let model = tracker.currentWidget.context.model
+    let fileId : string = (model as RealtimeDocumentModel).fileId;
+    let emailAddress = 'jupyter.realtime@gmail.com';
+    createPermissions(fileId, emailAddress);
+    console.log(fileId);
+  }
 }
