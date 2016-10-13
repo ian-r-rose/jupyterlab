@@ -131,13 +131,11 @@ function createMenu( app: JupyterLab, tracker: IEditorTracker ) : Menu {
   return menu;
 }
 
-function shareRealtimeDocument(tracker : IEditorTracker) {
+function shareRealtimeDocument(tracker : IEditorTracker) : void {
   if (tracker.currentWidget) {
-    debugger;
     let model = tracker.currentWidget.context.model
     let fileId : string = (model as RealtimeDocumentModel).fileId;
     let emailAddress = 'jupyter.realtime@gmail.com';
     createPermissions(fileId, emailAddress);
-    console.log(fileId);
   }
 }
