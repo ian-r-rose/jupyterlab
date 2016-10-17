@@ -57,10 +57,10 @@ const tracker = new InstanceTracker<EditorWidget>();
  * The table file handler extension.
  */
 export
-const realtimeExtension: JupyterLabPlugin<IEditorTracker> = {
+const realtimeTextExtension: JupyterLabPlugin<IEditorTracker> = {
   id: 'jupyter.extensions.realtime',
   requires: [IDocumentRegistry, IMainMenu],
-  activate: activateRealtime,
+  activate: activateRealtimeText,
   provides: IEditorTracker,
   autoStart: true
 };
@@ -73,7 +73,7 @@ const cmdIds = {
 /**
  * Activate the table widget extension.
  */
-function activateRealtime(app: JupyterLab, registry: IDocumentRegistry, mainMenu : IMainMenu): IEditorTracker {
+function activateRealtimeText(app: JupyterLab, registry: IDocumentRegistry, mainMenu : IMainMenu): IEditorTracker {
 
   let widgetFactory = new EditorWidgetFactory();
 
