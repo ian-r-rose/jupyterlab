@@ -13,10 +13,11 @@ const CLIENT_ID = '625147942732-t30t8vnn43fl5mvg1qde5pl84603dr6s.apps.googleuser
 const FILES_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const METADATA_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.metadata';
 const INSTALL_SCOPE = 'https://www.googleapis.com/auth/drive.install'
+const RT_MIMETYPE = 'application/vnd.google-apps.drive-sdk';
 
 
 
-export function setupRealtime () : void {
+export function authorize () : void {
 
   let handleAuthorization = function (authResult : any) {
     if (authResult && !authResult.error) {
@@ -63,9 +64,35 @@ export function createPermissions (fileId: string, emailAddress: string ) : void
     }
     gapi.client.drive.permissions.create( {
       'fileId': fileId,
-      'emailMessage' : '<a href=\"localhost:8888/lab?'+fileId+'\">Stop, collaborate, and listen.</a>',
+      'emailMessage' : 'fileId',
       'sendNotificationEmail' : true,
       'resource': permissionRequest
     }).then( (response : any) => {
     });
+}
+
+export function createRealtimeDocument() : Promise<gapi.drive.realtime.Document> {
+
+  return new Promise( (resolve, reject) => {
+    gapi.client.drive.files.create({
+      'resource': {
+        mimeType: RT_MIMETYPE,
+        name: 'jupyterlab_realtime_file'
+        }
+    }).then( (response : any) : any => {
+      let fileId : string = response.result.id;
+      gapi.drive.realtime.load(fileId,
+        (doc : gapi.drive.realtime.Document ) : any => {
+          resolve( doc );
+      });
+    });
+  });
+}
+
+export function loadRealtimeDocument( fileId : string) : Promise<gapi.drive.realtime.Document> {
+  return new Promise( (resolve, reject) => {
+    gapi.drive.realtime.load( fileId, (doc : gapi.drive.realtime.Document ):any => {
+      resolve(doc);
+    });
+  });
 }

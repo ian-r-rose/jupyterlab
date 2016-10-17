@@ -26,8 +26,8 @@ import {
 } from './model';
 
 import {
-  setupRealtime, createPermissions
-} from './auth';
+  authorize, createPermissions
+} from './gapi';
 
 import {
   EditorWidgetFactory, EditorWidget
@@ -109,7 +109,7 @@ function activateRealtime(app: JupyterLab, registry: IDocumentRegistry, mainMenu
     fileType: 'realtime text',
   });
 
-  setupRealtime();
+  authorize();
 
   mainMenu.addMenu(createMenu(app), {rank: 60});
   let commands = app.commands;
