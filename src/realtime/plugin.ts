@@ -2,10 +2,6 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  FocusTracker
-} from 'phosphor/lib/ui/focustracker';
-
-import {
   Menu
 } from 'phosphor/lib/ui/menu';
 
@@ -16,6 +12,10 @@ import {
 import {
   IDocumentRegistry
 } from '../docregistry';
+
+import {
+  InstanceTracker
+} from '../common/instancetracker';
 
 import {
   IMainMenu
@@ -48,6 +48,12 @@ const PORTRAIT_ICON_CLASS = 'jp-MainAreaPortraitIcon';
 const EDITOR_ICON_CLASS = 'jp-ImageTextEditor';
 
 /**
+ * The editor widget instance tracker.
+ */
+const tracker = new InstanceTracker<EditorWidget>();
+
+
+/**
  * The table file handler extension.
  */
 export
@@ -70,7 +76,12 @@ const cmdIds = {
 function activateRealtime(app: JupyterLab, registry: IDocumentRegistry, mainMenu : IMainMenu): IEditorTracker {
 
   let widgetFactory = new EditorWidgetFactory();
-  let tracker = new FocusTracker<EditorWidget>();
+
+  // Sync tracker with currently focused widget.
+  app.shell.currentChanged.connect((sender, args) => {
+    tracker.sync(args.newValue);
+  });
+
   widgetFactory.widgetCreated.connect((sender, widget) => {
     widget.title.icon = `${PORTRAIT_ICON_CLASS} ${EDITOR_ICON_CLASS}`;
     tracker.add(widget);
@@ -100,7 +111,7 @@ function activateRealtime(app: JupyterLab, registry: IDocumentRegistry, mainMenu
 
   setupRealtime();
 
-  mainMenu.addMenu(createMenu(app, tracker), {rank: 60});
+  mainMenu.addMenu(createMenu(app), {rank: 60});
   let commands = app.commands;
 
   commands.addCommand(cmdIds.newRealtimeFile, {
@@ -112,14 +123,14 @@ function activateRealtime(app: JupyterLab, registry: IDocumentRegistry, mainMenu
   commands.addCommand(cmdIds.shareRealtimeFile, {
     label: 'Share',
     caption: 'Share this file through Google ID',
-    execute: ()=> {shareRealtimeDocument(tracker);}
+    execute: ()=> {shareRealtimeDocument();}
   });
 
   return tracker;
 }
 
 
-function createMenu( app: JupyterLab, tracker: IEditorTracker ) : Menu {
+function createMenu( app: JupyterLab ) : Menu {
 
   let {commands, keymap} = app;
   let menu = new Menu( {commands, keymap} )
@@ -131,7 +142,7 @@ function createMenu( app: JupyterLab, tracker: IEditorTracker ) : Menu {
   return menu;
 }
 
-function shareRealtimeDocument(tracker : IEditorTracker) : void {
+function shareRealtimeDocument() : void {
   if (tracker.currentWidget) {
     let model = tracker.currentWidget.context.model
     let fileId : string = (model as RealtimeDocumentModel).fileId;
