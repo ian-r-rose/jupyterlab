@@ -7,11 +7,11 @@ import {
 
 import {
   DocumentModel, TextModelFactory
-} from '../docregistry/default';
+} from '../../docregistry/default';
 
 import {
   createRealtimeDocument, loadRealtimeDocument
-} from './gapi';
+} from '../gapi';
 
 declare let gapi : any;
 
