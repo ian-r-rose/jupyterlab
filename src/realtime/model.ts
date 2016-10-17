@@ -9,15 +9,17 @@ import {
   DocumentModel, TextModelFactory
 } from '../docregistry/default';
 
-declare let gapi : any;
+import {
+  createRealtimeDocument, loadRealtimeDocument
+} from './gapi';
 
-const RT_MIMETYPE = 'application/vnd.google-apps.drive-sdk';
+declare let gapi : any;
 
 export 
 class RealtimeDocumentModel extends DocumentModel {
   constructor(languagePreference?: string) {
     super(languagePreference);
-    this.createOrLoadRealtimeFile();
+    this.createOrLoadRealtimeDocument();
   }
 
   registerCollaborative(): void {
@@ -40,50 +42,31 @@ class RealtimeDocumentModel extends DocumentModel {
     this._collaborativeString.setText(value);
   }
 
-  loadRealtimeFile( fileId : string) : void {
-    let _this = this;
-    console.log("Attempting to load realtime file " + fileId);
-    gapi.drive.realtime.load( fileId, (doc : any ):any => {
-      _this._realtimeDoc = doc;
-      _this._realtimeModel = _this._realtimeDoc.getModel();
-      _this._collaborativeString = 
-        _this._realtimeModel.getRoot().get("collabString");
-      _this.registerCollaborative();
-    });
-  }
-
-  createRealtimeFile() : void {
-    let _this = this;
-    gapi.client.drive.files.create({
-      'resource': {
-        mimeType: RT_MIMETYPE,
-        name: 'jupyterlab_realtime_file'
-        }
-    }).then( (response : any) : any => {
-         _this._fileId = JSON.parse(response.body).id;
-         gapi.drive.realtime.load( _this._fileId, (doc : any ):any => {
-           _this._realtimeDoc = doc;
-           _this._realtimeModel = _this._realtimeDoc.getModel();
-           _this._collaborativeString = 
-             _this._realtimeModel.createString("I am a collaborative string");
-           _this._realtimeModel.getRoot()
-             .set("collabString", _this._collaborativeString);
-           console.log("setup realtime document "+_this._fileId);
-           _this.registerCollaborative();
-         });
-       });
-  }
-
-  createOrLoadRealtimeFile() : void {
-    let _this = this;
-    gapi.client.load('drive', 'v3').then( function() {
+  createOrLoadRealtimeDocument() : void {
+    gapi.client.load('drive', 'v3').then( () => {
       let query : string = (window as any).location.search;
       if (query) {
-        _this._fileId = query.slice(1);
-        _this.loadRealtimeFile(_this._fileId);
-      }
-      else {
-        _this.createRealtimeFile();
+        this._fileId = query.slice(1);
+        console.log("Attempting to load realtime file " + this._fileId);
+        loadRealtimeDocument(this._fileId).then( (doc : gapi.drive.realtime.Document) => {
+          this._realtimeDoc = doc;
+          this._realtimeModel = this._realtimeDoc.getModel();
+          this._collaborativeString =
+            this._realtimeModel.getRoot().get("collabString");
+          this.registerCollaborative();
+        });
+      } else {
+        createRealtimeDocument().then( (doc : gapi.drive.realtime.Document) => {
+          this._fileId = (doc as any).__rtinternal.o //This is very fragile.
+          this._realtimeDoc = doc;
+          this._realtimeModel = this._realtimeDoc.getModel();
+          this._collaborativeString =
+            this._realtimeModel.createString("I am a collaborative string");
+          this._realtimeModel.getRoot()
+            .set("collabString", this._collaborativeString);
+          console.log("setup realtime document "+this._fileId);
+          this.registerCollaborative();
+        });
       }
     });
   }
