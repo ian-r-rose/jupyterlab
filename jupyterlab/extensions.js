@@ -26,5 +26,5 @@ module.exports = [
   require('../lib/services/plugin').servicesProvider,
   require('../lib/shortcuts/plugin').shortcutsExtension,
   require('../lib/terminal/plugin').terminalExtension,
-  require('../lib/realtime/plugin').realtimeExtension
+  require('../lib/realtime/text/plugin').realtimeExtension
 ];
