@@ -7,19 +7,19 @@ import {
 
 import {
   JupyterLab, JupyterLabPlugin
-} from '../application';
+} from '../../application';
 
 import {
   IDocumentRegistry
-} from '../docregistry';
+} from '../../docregistry';
 
 import {
   InstanceTracker
-} from '../common/instancetracker';
+} from '../../common/instancetracker';
 
 import {
   IMainMenu
-} from '../mainmenu';
+} from '../../mainmenu';
 
 import {
   RealtimeDocumentModel, RealtimeTextModelFactory
@@ -27,15 +27,15 @@ import {
 
 import {
   authorize, createPermissions
-} from './gapi';
+} from '../gapi';
 
 import {
   EditorWidgetFactory, EditorWidget
-} from '../editorwidget';
+} from '../../editorwidget';
 
 import {
   IEditorTracker
-} from '../editorwidget';
+} from '../../editorwidget';
 
 /**
  * The class name for all main area portrait tab icons.
