@@ -43,32 +43,30 @@ class RealtimeDocumentModel extends DocumentModel {
   }
 
   createOrLoadRealtimeDocument() : void {
-    gapi.client.load('drive', 'v3').then( () => {
-      let query : string = (window as any).location.search;
-      if (query) {
-        this._fileId = query.slice(1);
-        console.log("Attempting to load realtime file " + this._fileId);
-        loadRealtimeDocument(this._fileId).then( (doc : gapi.drive.realtime.Document) => {
-          this._realtimeDoc = doc;
-          this._realtimeModel = this._realtimeDoc.getModel();
-          this._collaborativeString =
-            this._realtimeModel.getRoot().get("collabString");
-          this.registerCollaborative();
-        });
-      } else {
-        createRealtimeDocument().then( (doc : gapi.drive.realtime.Document) => {
-          this._fileId = (doc as any).__rtinternal.o //This is very fragile.
-          this._realtimeDoc = doc;
-          this._realtimeModel = this._realtimeDoc.getModel();
-          this._collaborativeString =
-            this._realtimeModel.createString("I am a collaborative string");
-          this._realtimeModel.getRoot()
-            .set("collabString", this._collaborativeString);
-          console.log("setup realtime document "+this._fileId);
-          this.registerCollaborative();
-        });
-      }
-    });
+    let query : string = (window as any).location.search;
+    if (query) {
+      this._fileId = query.slice(1);
+      console.log("Attempting to load realtime file " + this._fileId);
+      loadRealtimeDocument(this._fileId).then( (doc : gapi.drive.realtime.Document) => {
+        this._realtimeDoc = doc;
+        this._realtimeModel = this._realtimeDoc.getModel();
+        this._collaborativeString =
+          this._realtimeModel.getRoot().get("collabString");
+        this.registerCollaborative();
+      });
+    } else {
+      createRealtimeDocument().then( (doc : gapi.drive.realtime.Document) => {
+        this._fileId = (doc as any).__rtinternal.o //This is very fragile.
+        this._realtimeDoc = doc;
+        this._realtimeModel = this._realtimeDoc.getModel();
+        this._collaborativeString =
+          this._realtimeModel.createString("I am a collaborative string");
+        this._realtimeModel.getRoot()
+          .set("collabString", this._collaborativeString);
+        console.log("setup realtime document "+this._fileId);
+        this.registerCollaborative();
+      });
+    }
   }
 
   get fileId() : string {
