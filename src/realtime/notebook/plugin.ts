@@ -49,8 +49,7 @@ import {
 } from './model';
 
 import {
-  authorize, createRealtimeDocument, 
-  loadRealtimeDocument, createPermissions
+  authorize, createPermissions
 } from '../gapi';
 
 

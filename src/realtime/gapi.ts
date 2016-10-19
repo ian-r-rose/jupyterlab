@@ -2,6 +2,8 @@
 //
 // Distributed under the terms of the Modified BSD License.
 
+import $ = require('jquery');
+
 import {
   showDialog
 } from '../dialog';
@@ -15,60 +17,78 @@ const METADATA_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.metadata';
 const INSTALL_SCOPE = 'https://www.googleapis.com/auth/drive.install'
 const RT_MIMETYPE = 'application/vnd.google-apps.drive-sdk';
 
+export let gapiLoaded = new Promise<void>( (resolve, reject) => {
+  $.getScript('https://apis.google.com/js/api.js')
+    .done( (script, textStatus)=> {
+      (window as any).gapi.load('auth:client,drive-realtime,drive-share', ()=> {
+        console.log("gapi: loaded onto page");
+        resolve();
+      });
+    })
+    .fail( () => {
+      console.log("gapi: unable to load onto page");
+      reject();
+    });
+});
+
 
 
 export function authorize () : void {
 
-  let handleAuthorization = function (authResult : any) {
-    if (authResult && !authResult.error) {
-      return;
-    } else {
-      popupAuthorization();
-    }
-  }
+  gapiLoaded.then( () => {
 
-  let popupAuthorization = function() {
-    showDialog({
-      title: 'Proceed to Google Authorization?',
-      okText: 'OK'
-    }).then( result => {
-      if (result.text === 'OK') {
-        gapi.auth.authorize({
-          client_id: CLIENT_ID,
-          scope: [ FILES_OAUTH_SCOPE, METADATA_OAUTH_SCOPE],
-          immediate: false
-          },
-          handleAuthorization);
-      } else {
+    let handleAuthorization = function (authResult : any) {
+      if (authResult && !authResult.error) {
         return;
+      } else {
+        popupAuthorization();
       }
-    });
-  }
+    }
 
-  //Attempt to authorize without a popup
-  gapi.auth.authorize({
-       client_id: CLIENT_ID,
-          scope: [
-            FILES_OAUTH_SCOPE,
-            METADATA_OAUTH_SCOPE
-          ],
-          immediate: true
-        }, handleAuthorization);
+    let popupAuthorization = function() {
+      showDialog({
+        title: 'Proceed to Google Authorization?',
+        okText: 'OK'
+      }).then( result => {
+        if (result.text === 'OK') {
+          gapi.auth.authorize({
+            client_id: CLIENT_ID,
+            scope: [ FILES_OAUTH_SCOPE, METADATA_OAUTH_SCOPE],
+            immediate: false
+            },
+            handleAuthorization);
+        } else {
+          return;
+        }
+      });
+    }
+
+    //Attempt to authorize without a popup
+    gapi.auth.authorize({
+         client_id: CLIENT_ID,
+            scope: [
+              FILES_OAUTH_SCOPE,
+              METADATA_OAUTH_SCOPE
+            ],
+            immediate: true
+          }, handleAuthorization);
+  });
 }
 
 export function createPermissions (fileId: string, emailAddress: string ) : void {
-    let permissionRequest = {
-      'type' : 'user',
-      'role' : 'writer',
-      'emailAddress': emailAddress
-    }
-    gapi.client.drive.permissions.create( {
-      'fileId': fileId,
-      'emailMessage' : 'fileId',
-      'sendNotificationEmail' : true,
-      'resource': permissionRequest
-    }).then( (response : any) => {
-    });
+
+  let permissionRequest = {
+    'type' : 'user',
+    'role' : 'writer',
+    'emailAddress': emailAddress
+  }
+  gapi.client.drive.permissions.create( {
+    'fileId': fileId,
+    'emailMessage' : 'fileId',
+    'sendNotificationEmail' : true,
+    'resource': permissionRequest
+  }).then( (response : any) => {
+  });
 }
 
 export function createRealtimeDocument() : Promise<gapi.drive.realtime.Document> {
