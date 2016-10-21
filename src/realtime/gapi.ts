@@ -81,12 +81,15 @@ export function createPermissions (fileId: string, emailAddress: string ) : void
     'role' : 'writer',
     'emailAddress': emailAddress
   }
-  gapi.client.drive.permissions.create( {
-    'fileId': fileId,
-    'emailMessage' : 'fileId',
-    'sendNotificationEmail' : true,
-    'resource': permissionRequest
-  }).then( (response : any) => {
+  gapi.client.load('drive', 'v3').then( () => {
+    gapi.client.drive.permissions.create( {
+      'fileId': fileId,
+      'emailMessage' : 'fileId',
+      'sendNotificationEmail' : true,
+      'resource': permissionRequest
+    }).then( (response : any) => {
+      console.log("gapi: created permissions for "+emailAddress);
+    });
   });
 }
 
