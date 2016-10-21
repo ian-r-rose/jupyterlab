@@ -29,6 +29,5 @@ module.exports = [
   require('../lib/shortcuts/plugin').shortcutsExtension,
   require('../lib/statedb/plugin').stateProvider,
   require('../lib/terminal/plugin').terminalExtension,
-  require('../lib/realtime/text/plugin').realtimeTextExtension,
-  require('../lib/realtime/notebook/plugin').realtimeNotebookExtension
+  require('../lib/realtime/plugin').realtimeExtension
 ];
