@@ -96,11 +96,14 @@ function shareRealtimeDocument() : void {
       handler = new GoogleRealtimeHandler();
     }
 
-    let model : DocumentRegistry.IModel = (tracker.currentWidget as any).context.model;
+    //let model : DocumentRegistry.IModel = (tracker.currentWidget as any).context.model;
+    let model = (tracker.currentWidget as any)._content;
     (model as any).registerCollaborative(handler);
-    let emailAddress = 'jupyter.realtime@gmail.com';
-    handler.ready.then( () => {
-      createPermissions(handler.fileId, emailAddress);
-    });
+    if(!query) {
+      let emailAddress = 'jupyter.realtime@gmail.com';
+      handler.ready.then( () => {
+        createPermissions(handler.fileId, emailAddress);
+      });
+    }
   }
 }
