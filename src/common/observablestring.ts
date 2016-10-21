@@ -18,7 +18,7 @@ interface IObservableString extends IDisposable {
   /**
    * A signal emitted when the vector has changed.
    */
-  changed: ISignal<IObservableString, void>;
+  changed: ISignal<IObservableString, string>;
 
   setText( value: string ) : void;
 
@@ -43,13 +43,14 @@ class ObservableString implements IObservableString {
   /**
    * A signal emitted when the string has changed.
    */
-  changed: ISignal<IObservableString, void>;
+  changed: ISignal<IObservableString, string>;
 
   isDisposed : boolean = false;
 
   setText( value: string ): void {
+    let oldValue = this._text;
     this._text = value;
-    this.changed.emit(void 0);
+    this.changed.emit(oldValue);
   }
 
   getText(): string {

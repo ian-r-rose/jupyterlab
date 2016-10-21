@@ -37,6 +37,14 @@ import {
   OutputAreaModel
 } from '../output-area';
 
+import {
+  IRealtimeHandler, IRealtimeModel
+} from '../../realtime/handler';
+
+import {
+  ObservableString
+} from '../../common/observablestring';
+
 
 /**
  * The definition of a model object for a cell.
@@ -146,11 +154,18 @@ interface IRawCellModel extends ICellModel {
  * An implementation of the cell model.
  */
 export
-class CellModel implements ICellModel {
+class CellModel implements ICellModel, IRealtimeModel {
   /**
    * Construct a cell model from optional cell content.
    */
   constructor(cell?: nbformat.IBaseCell) {
+
+    this._source.changed.connect( (s : any, oldVal : string) => {
+      this.contentChanged.emit(void 0);
+      let newVal : string = s.getText();
+      this.stateChanged.emit({ name: 'source', oldValue : oldVal, newValue : newVal });
+    });
+
     if (!cell) {
       return;
     }
@@ -189,16 +204,14 @@ class CellModel implements ICellModel {
    * The input content of the cell.
    */
   get source(): string {
-    return this._source;
+    return this._source.getText();
   }
   set source(newValue: string) {
-    if (this._source === newValue) {
+    if (this._source.getText() === newValue) {
       return;
     }
-    let oldValue = this._source;
-    this._source = newValue;
-    this.contentChanged.emit(void 0);
-    this.stateChanged.emit({ name: 'source', oldValue, newValue });
+    let oldValue = this._source.getText();
+    this._source.setText(newValue);
   }
 
   /**
@@ -273,6 +286,11 @@ class CellModel implements ICellModel {
     return iter(Object.keys(this._metadata));
   }
 
+  registerCollaborative(handler : IRealtimeHandler) {
+    this._realtime = handler;
+    this._realtime.registerString( this._source) ;
+  }
+
   /**
    * Set the cursor data for a given field.
    */
@@ -293,7 +311,8 @@ class CellModel implements ICellModel {
 
   private _metadata: { [key: string]: any } = Object.create(null);
   private _cursors: { [key: string]: MetadataCursor } = Object.create(null);
-  private _source = '';
+  private _source = new ObservableString('');
+  private _realtime : IRealtimeHandler = null;
 }
 
 

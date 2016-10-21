@@ -57,6 +57,10 @@ import {
   ConsoleHistory, IConsoleHistory
 } from './history';
 
+import {
+  IRealtimeHandler, IRealtimeModel
+} from '../realtime/handler';
+
 
 /**
  * The class name added to console widgets.
@@ -102,7 +106,7 @@ const EXECUTION_TIMEOUT = 250;
  * instance. Under most circumstances, it is not instantiated by user code.
  */
 export
-class ConsoleContent extends Widget {
+class ConsoleContent extends Widget implements IRealtimeModel {
   /**
    * Construct a console widget.
    */
@@ -322,6 +326,11 @@ class ConsoleContent extends Widget {
     return output;
   }
 
+  registerCollaborative(handler : IRealtimeHandler) {
+    this._realtime = handler;
+    (this.prompt.model as any).registerCollaborative(handler);
+  }
+
   /**
    * Initialize the banner and mimetype.
    */
@@ -458,6 +467,9 @@ class ConsoleContent extends Widget {
 
     // Create the new prompt.
     prompt = this._renderer.createPrompt(this._rendermime);
+    if(this._realtime) {
+      (prompt.model as any).registerCollaborative(this._realtime);
+    }
     prompt.mimetype = this._mimetype;
     prompt.addClass(PROMPT_CLASS);
     this._input.addWidget(prompt);
@@ -568,6 +580,7 @@ class ConsoleContent extends Widget {
   private _session: ISession = null;
   private _setByHistory = false;
   private _foreignCells: { [key: string]: CodeCellWidget; } = {};
+  private _realtime: IRealtimeHandler = null;
 }
 
 
