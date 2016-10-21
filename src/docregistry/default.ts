@@ -26,17 +26,29 @@ import {
   DocumentRegistry
 } from './index';
 
+import {
+  IRealtimeHandler, IRealtimeModel
+} from '../realtime/handler';
+
+import {
+  ObservableString
+} from '../common/observablestring';
+
 
 /**
  * The default implementation of a document model.
  */
 export
-class DocumentModel implements DocumentRegistry.IModel {
+class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
   /**
    * Construct a new document model.
    */
   constructor(languagePreference?: string) {
     this._defaultLang = languagePreference || '';
+    this._text.changed.connect( (s) => {
+      this.contentChanged.emit(void 0);
+      this.dirty = true;
+    });
   }
 
   /**
@@ -117,7 +129,7 @@ class DocumentModel implements DocumentRegistry.IModel {
    * Serialize the model to a string.
    */
   toString(): string {
-    return this._text;
+    return this._text.getText();
   }
 
   /**
@@ -127,19 +139,17 @@ class DocumentModel implements DocumentRegistry.IModel {
    * Should emit a [contentChanged] signal.
    */
   fromString(value: string): void {
-    if (this._text === value) {
+    if (this._text.getText() === value) {
       return;
     }
-    this._text = value;
-    this.contentChanged.emit(void 0);
-    this.dirty = true;
+    this._text.setText(value);
   }
 
   /**
    * Serialize the model to JSON.
    */
   toJSON(): any {
-    return JSON.stringify(this._text);
+    return JSON.stringify(this._text.getText());
   }
 
   /**
@@ -152,11 +162,22 @@ class DocumentModel implements DocumentRegistry.IModel {
     this.fromString(JSON.parse(value));
   }
 
-  private _text = '';
+  /**
+   * Describe the model to an existing RealtimeHandler.
+   * Meant to be subclassed by other DocumentModels.
+   */
+  registerCollaborative( realtimeHandler : IRealtimeHandler ) : void {
+    this._realtime = realtimeHandler;
+    this._realtime.registerString( this._text) ;
+  }
+
+  private _text = new ObservableString('');
   private _defaultLang = '';
   private _dirty = false;
   private _readOnly = false;
   private _isDisposed = false;
+
+  private _realtime : IRealtimeHandler = null;
 }
 
 // Define the signals for the `DocumentModel` class.

@@ -33,6 +33,11 @@ import {
   IEditorServices
 } from '../codeeditor';
 
+import {
+  shareRealtimeDocument
+} from '../realtime/plugin';
+
+
 /**
  * The class name for all main area portrait tab icons.
  */
@@ -56,7 +61,8 @@ const cmdIds = {
   lineNumbers: 'editor:line-numbers',
   lineWrap: 'editor:line-wrap',
   createConsole: 'editor:create-console',
-  runCode: 'editor:run-code'
+  runCode: 'editor:run-code',
+  share: 'editor:share'
 };
 
 
@@ -185,6 +191,15 @@ function activateEditorHandler(app: JupyterLab, registry: IDocumentRegistry, sta
       commands.execute('console:inject', { id, code });
     },
     label: 'Run Code',
+  });
+
+  commands.addCommand(cmdIds.share, {
+    execute: () => {
+      if (tracker.currentWidget) {
+        shareRealtimeDocument( tracker.currentWidget.context.model );
+      }
+    },
+    label: 'Share'
   });
 
   return tracker;

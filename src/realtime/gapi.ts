@@ -1,5 +1,4 @@
 // Copyright (c) Jupyter Development Team.
-//
 // Distributed under the terms of the Modified BSD License.
 
 import $ = require('jquery');
@@ -104,6 +103,7 @@ export function createRealtimeDocument() : Promise<gapi.drive.realtime.Document>
         let fileId : string = response.result.id;
         gapi.drive.realtime.load(fileId,
           (doc : gapi.drive.realtime.Document ) : any => {
+            console.log("gapi: created realtime document "+fileId);
             resolve( doc );
         });
       });
@@ -112,6 +112,7 @@ export function createRealtimeDocument() : Promise<gapi.drive.realtime.Document>
 }
 
 export function loadRealtimeDocument( fileId : string) : Promise<gapi.drive.realtime.Document> {
+  console.log("gapi : attempting to load realtime file " + fileId);
   return new Promise( (resolve, reject) => {
     gapi.drive.realtime.load( fileId, (doc : gapi.drive.realtime.Document ):any => {
       resolve(doc);
