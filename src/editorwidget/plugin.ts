@@ -45,10 +45,6 @@ import {
   DEFAULT_CODEMIRROR_THEME
 } from '../codemirror/widget';
 
-import {
-  shareRealtimeDocument
-} from '../realtime/plugin';
-
 import 'codemirror/addon/edit/matchbrackets.js';
 import 'codemirror/addon/edit/closebrackets.js';
 import 'codemirror/addon/comment/comment.js';
@@ -81,8 +77,7 @@ const cmdIds = {
   closeAll: 'editor:close-all',
   changeTheme: 'editor:change-theme',
   createConsole: 'editor:create-console',
-  runCode: 'editor:run-code',
-  share: 'editor:share'
+  runCode: 'editor:run-code'
 };
 
 
@@ -300,16 +295,6 @@ function activateEditorHandler(app: JupyterLab, registry: IDocumentRegistry, mai
     label: 'Run Code',
   });
 
-  commands.addCommand(cmdIds.share, {
-    execute: () => {
-      if (tracker.currentWidget) {
-        shareRealtimeDocument( tracker.currentWidget.context.model );
-      }
-    },
-    label: 'Share'
-  });
-
-
   [
     cmdIds.lineNumbers,
     cmdIds.lineWrap,
@@ -318,7 +303,6 @@ function activateEditorHandler(app: JupyterLab, registry: IDocumentRegistry, mai
     cmdIds.closeAll,
     cmdIds.createConsole,
     cmdIds.runCode,
-    cmdIds.share
   ].forEach(command => palette.addItem({ command, category: 'Editor' }));
 
   return tracker;

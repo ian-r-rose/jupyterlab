@@ -47,10 +47,11 @@ interface IRealtimeHandler {
 export
 class GoogleRealtimeHandler implements IRealtimeHandler {
 
+
   constructor( fileId : string = '' ) {
     this._objects = 
       new ObservableVector<gapi.drive.realtime.CollaborativeObject>();
-    this._ready = new Promise<void>( (resolve, reject) => {
+    this.ready = new Promise<void>( (resolve, reject) => {
       if (fileId) {
         this._fileId = fileId;
         this._creator = false;
@@ -78,14 +79,13 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
   }
 
   registerString ( str: ObservableString ) : void {
-    this._ready.then( () => {
+    this.ready.then( () => {
       //Initialize the collaborativeString
       let collabStr : gapi.drive.realtime.CollaborativeString = null;
       if (this._creator) {
         collabStr = this._model.createString(str.getText());
         this._objects.pushBack( collabStr );
         this._model.getRoot().set("collabString", collabStr );
-        console.log(collabStr.getText());
       } else {
         collabStr = this._model.getRoot().get("collabString");
         this._objects.pushBack( collabStr );
@@ -112,7 +112,6 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
 
       str.changed.connect( (s) => {
         collabStr.setText(s.getText());
-        console.log(s.getText());
       });
     });
   }
@@ -121,11 +120,12 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
     return this._fileId;
   }
 
+
   private _objects : ObservableVector<gapi.drive.realtime.CollaborativeObject> = null;
 
   private _creator : boolean;
   private _fileId : string = '';
   private _doc : gapi.drive.realtime.Document = null;
   private _model : gapi.drive.realtime.Model = null;
-  private _ready : Promise<void> = null;
+  ready : Promise<void> = null;
 }
