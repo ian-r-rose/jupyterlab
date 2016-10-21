@@ -61,6 +61,10 @@ import {
   IObservableVector, ObservableVector
 } from '../common/observablevector';
 
+import {
+  IRealtimeHandler, IRealtimeModel
+} from '../realtime/handler';
+
 /**
  * The class name added to console widgets.
  */
@@ -105,7 +109,7 @@ const EXECUTION_TIMEOUT = 250;
  * instance. Under most circumstances, it is not instantiated by user code.
  */
 export
-class ConsoleContent extends Widget {
+class ConsoleContent extends Widget implements IRealtimeModel {
   /**
    * Construct a console content widget.
    */
@@ -357,6 +361,11 @@ class ConsoleContent extends Widget {
     }
   }
 
+  registerCollaborative(handler : IRealtimeHandler) {
+    this._realtime = handler;
+    (this.prompt.model as any).registerCollaborative(handler);
+  }
+
   /**
    * Handle `after_attach` messages for the widget.
    */
@@ -405,6 +414,9 @@ class ConsoleContent extends Widget {
 
     // Create the new prompt.
     prompt = this._renderer.createPrompt(this._rendermime, this);
+    if(this._realtime) {
+      (prompt.model as any).registerCollaborative(this._realtime);
+    }
     prompt.mimetype = this._mimetype;
     prompt.addClass(PROMPT_CLASS);
     this._input.addWidget(prompt);
@@ -634,6 +646,7 @@ class ConsoleContent extends Widget {
   private _rendermime: IRenderMime = null;
   private _session: Session.ISession = null;
   private _setByHistory = false;
+  private _realtime: IRealtimeHandler = null;
 }
 
 
