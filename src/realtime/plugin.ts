@@ -34,7 +34,7 @@ import {
 } from '../docregistry/registry';
 
 /**
- * The editor widget instance tracker.
+ * The realtime widget instance tracker.
  */
 const tracker = new InstanceTracker<Widget>();
 
@@ -54,6 +54,9 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): void {
 
   // Sync tracker with currently focused widget.
   app.shell.currentChanged.connect((sender, args) => {
+    if(!tracker.has(args.newValue)) {
+      tracker.add(args.newValue);
+    }
     tracker.sync(args.newValue);
   });
 
@@ -65,7 +68,7 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): void {
   commands.addCommand(cmdIds.shareRealtimeFile, {
     label: 'Share',
     caption: 'Share this file through Google ID',
-    execute: ()=> {/*shareRealtimeDocument();*/}
+    execute: ()=> {shareRealtimeDocument();}
   });
 }
 
@@ -82,8 +85,8 @@ function createMenu( app: JupyterLab ) : Menu {
 }
 
 export
-function shareRealtimeDocument( model : any) : void {
-  if (model) {
+function shareRealtimeDocument() : void {
+  if (tracker.currentWidget) {
     let query : string = (window as any).location.search;
     let handler : GoogleRealtimeHandler = null;
     if (query) {
@@ -92,12 +95,12 @@ function shareRealtimeDocument( model : any) : void {
     } else {
       handler = new GoogleRealtimeHandler();
     }
-    console.log(handler.fileId);
 
-    //let model : DocumentRegistry.IModel = (tracker.currentWidget as any).context.model;
+    let model : DocumentRegistry.IModel = (tracker.currentWidget as any).context.model;
     (model as any).registerCollaborative(handler);
-    let fileId : string = handler.fileId;
     let emailAddress = 'jupyter.realtime@gmail.com';
-    //createPermissions(fileId, emailAddress);
+    handler.ready.then( () => {
+      createPermissions(handler.fileId, emailAddress);
+    });
   }
 }
