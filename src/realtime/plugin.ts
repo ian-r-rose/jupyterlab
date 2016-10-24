@@ -33,6 +33,10 @@ import {
   DocumentRegistry
 } from '../docregistry/registry';
 
+import {
+  showDialog, okButton
+} from '../dialog';
+
 /**
  * The realtime widget instance tracker.
  */
@@ -47,7 +51,8 @@ const realtimeExtension: JupyterLabPlugin<void> = {
 };
 
 const cmdIds = {
-  shareRealtimeFile : 'realtime:share'
+  shareRealtimeFile : 'realtime:share',
+  openRealtimeFile : 'realtime:open'
 };
 
 function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): void {
@@ -68,7 +73,34 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): void {
   commands.addCommand(cmdIds.shareRealtimeFile, {
     label: 'Share',
     caption: 'Share this file through Google ID',
-    execute: ()=> {shareRealtimeDocument();}
+    execute: ()=> {
+      let input = document.createElement('input');
+      showDialog({
+        title: 'Email address...',
+        body: input,
+        okText: 'SHARE'
+      }).then(result => {
+        if (result.text === 'SHARE') {
+          shareRealtimeDocument(input.value);
+        }
+      });
+    }
+  });
+  commands.addCommand(cmdIds.openRealtimeFile, {
+    label: 'Open',
+    caption: 'Open a file that has been shared with you',
+    execute: ()=> {
+      let input = document.createElement('input');
+      showDialog({
+        title: 'File ID...',
+        body: input,
+        okText: 'OPEN'
+      }).then(result => {
+        if (result.text === 'OPEN') {
+          openRealtimeDocument( input.value);
+        }
+      });
+    }
   });
 }
 
@@ -80,30 +112,29 @@ function createMenu( app: JupyterLab ) : Menu {
   menu.title.label = 'Realtime'
 
   menu.addItem( {command: cmdIds.shareRealtimeFile});
+  menu.addItem( {command: cmdIds.openRealtimeFile});
 
   return menu;
 }
 
 export
-function shareRealtimeDocument() : void {
+function shareRealtimeDocument( emailAddress : string) : void {
   if (tracker.currentWidget) {
-    let query : string = (window as any).location.search;
-    let handler : GoogleRealtimeHandler = null;
-    if (query) {
-      let fileId : string = query.slice(1);
-      handler = new GoogleRealtimeHandler(fileId);
-    } else {
-      handler = new GoogleRealtimeHandler();
-    }
-
+    let handler = new GoogleRealtimeHandler();
     //let model : DocumentRegistry.IModel = (tracker.currentWidget as any).context.model;
     let model = (tracker.currentWidget as any)._content;
     (model as any).registerCollaborative(handler);
-    if(!query) {
-      let emailAddress = 'jupyter.realtime@gmail.com';
-      handler.ready.then( () => {
-        createPermissions(handler.fileId, emailAddress);
-      });
-    }
+    handler.ready.then( () => {
+      console.log(handler.fileId);
+      createPermissions(handler.fileId, emailAddress);
+    });
   }
 }
+
+export
+function openRealtimeDocument( fileId: string) : void {
+  let handler = new GoogleRealtimeHandler(fileId);
+  let model = (tracker.currentWidget as any)._content;
+  (model as any).registerCollaborative(handler);
+}
+
