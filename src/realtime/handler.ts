@@ -65,11 +65,13 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
         });
       } else {
         this._creator = true;
-        createRealtimeDocument().then( (doc : gapi.drive.realtime.Document) => {
-          this._fileId = (doc as any).__rtinternal.o //This is very fragile.
-          this._doc = doc;
-          this._model = this._doc.getModel();
-          resolve();
+        createRealtimeDocument().then( (fileId: string) => {
+          this._fileId = fileId;
+          loadRealtimeDocument(fileId).then( (doc : gapi.drive.realtime.Document) => {
+            this._doc = doc;
+            this._model = this._doc.getModel();
+            resolve();
+          });
         }).catch( () => {
           console.log("gapi: unable to create realtime document")
           reject();
