@@ -84,7 +84,7 @@ export function createPermissions (fileId: string, emailAddress: string ) : void
   gapi.client.load('drive', 'v3').then( () => {
     gapi.client.drive.permissions.create( {
       'fileId': fileId,
-      'emailMessage' : 'fileId',
+      'emailMessage' : fileId,
       'sendNotificationEmail' : true,
       'resource': permissionRequest
     }).then( (response : any) => {
@@ -93,7 +93,7 @@ export function createPermissions (fileId: string, emailAddress: string ) : void
   });
 }
 
-export function createRealtimeDocument() : Promise<gapi.drive.realtime.Document> {
+export function createRealtimeDocument() : Promise<string> {
 
   return new Promise( (resolve, reject) => {
     gapi.client.load('drive', 'v3').then( () => {
@@ -102,13 +102,10 @@ export function createRealtimeDocument() : Promise<gapi.drive.realtime.Document>
           mimeType: RT_MIMETYPE,
           name: 'jupyterlab_realtime_file'
           }
-      }).then( (response : any) : any => {
+      }).then( (response : any) : void => {
         let fileId : string = response.result.id;
-        gapi.drive.realtime.load(fileId,
-          (doc : gapi.drive.realtime.Document ) : any => {
-            console.log("gapi: created realtime document "+fileId);
-            resolve( doc );
-        });
+        console.log("gapi: created realtime document "+fileId);
+        resolve(fileId);
       });
     });
   });
