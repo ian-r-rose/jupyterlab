@@ -61,6 +61,9 @@ import {
   IRealtimeHandler, IRealtimeModel
 } from '../realtime/handler';
 
+import {
+  IObservableVector, ObservableVector
+} from '../common/observablevector';
 
 /**
  * The class name added to console widgets.
@@ -182,6 +185,20 @@ class ConsoleContent extends Widget implements IRealtimeModel {
       this._foreignCells = {};
       this.monitorForeignIOPub();
     });
+
+    this._promptCode = new ObservableVector<string>();
+    this._promptCode.changed.connect( (vec, change) => {
+      // Create a new cell using the prompt renderer.
+      if (change.newValues.at(0) as string !== 
+          (this._content.widgets as any).back.model.source) {
+        let cell = this._renderer.createPrompt(this._rendermime);
+        cell.model.source = (change.newValues.at(0) as string);
+        cell.mimetype = this._mimetype;
+        cell.readOnly = true;
+        this._content.addWidget(cell);
+      }
+    });
+
   }
 
   /**
@@ -329,6 +346,7 @@ class ConsoleContent extends Widget implements IRealtimeModel {
   registerCollaborative(handler : IRealtimeHandler) {
     this._realtime = handler;
     (this.prompt.model as any).registerCollaborative(handler);
+    this._realtime.registerVector(this._promptCode);
   }
 
   /**
@@ -469,7 +487,9 @@ class ConsoleContent extends Widget implements IRealtimeModel {
     prompt = this._renderer.createPrompt(this._rendermime);
     if(this._realtime) {
       (prompt.model as any).registerCollaborative(this._realtime);
+      (this._realtime as any)._objects.at(0).setText('');
     }
+    (prompt.model as any)._source.clear();
     prompt.mimetype = this._mimetype;
     prompt.addClass(PROMPT_CLASS);
     this._input.addWidget(prompt);
@@ -527,6 +547,7 @@ class ConsoleContent extends Widget implements IRealtimeModel {
    */
   private _execute(cell: CodeCellWidget): Promise<void> {
     this._history.push(cell.model.source);
+    this._promptCode.pushBack(cell.model.source);
     cell.model.contentChanged.connect(this.update, this);
     let onSuccess = (value: KernelMessage.IExecuteReplyMsg) => {
       this.executed.emit(new Date());
@@ -581,6 +602,7 @@ class ConsoleContent extends Widget implements IRealtimeModel {
   private _setByHistory = false;
   private _foreignCells: { [key: string]: CodeCellWidget; } = {};
   private _realtime: IRealtimeHandler = null;
+  private _promptCode : ObservableVector<string> = null;
 }
 
 

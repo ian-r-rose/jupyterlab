@@ -42,6 +42,10 @@ interface IRealtimeHandler {
    * Include a string in the realtime model.
    */
   registerString( str : ObservableString ) : void;
+  /**
+   * Include a vector in the realtime model.
+   */
+  registerVector( str : ObservableVector<string> ) : void;
 }
 
 export
@@ -83,7 +87,8 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
   registerString ( str: ObservableString ) : void {
     this.ready.then( () => {
       //Initialize the collaborativeString
-      let strName = 'collabString' + String(this._nStr++);
+      let strName = 'collabString';// + String(this._nStr++);
+      console.log(strName);
       let collabStr : gapi.drive.realtime.CollaborativeString = null;
       collabStr = this._model.getRoot().get(strName);
       if(!collabStr) {
@@ -119,6 +124,34 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
     });
   }
 
+  registerVector ( vec: ObservableVector<string> ) : void {
+    this.ready.then( () => {
+      //Initialize the collaborativeString
+      let vecName = 'collabVec' + String(this._nVec++);
+      let collabVec : gapi.drive.realtime.CollaborativeList<string> = null;
+      collabVec = this._model.getRoot().get(vecName);
+      if(!collabVec) {
+        collabVec = this._model.createList<string>();
+        this._model.getRoot().set(vecName, collabVec );
+      }
+      this._objects.pushBack( collabVec );
+
+      //Add event listeners to the collaborativeString
+      collabVec.addEventListener(
+        gapi.drive.realtime.EventType.VALUES_ADDED,
+        (evt : any) => {
+          if (!evt.isLocal && evt.values[0] != vec.back) {
+            vec.pushBack(evt.values[0]);
+          }
+        }
+      );
+
+      vec.changed.connect( (vec, change) => {
+        collabVec.push(change.newValues.at(0) as string);
+      });
+    });
+  }
+
   get fileId() : string {
     return this._fileId;
   }
@@ -132,4 +165,5 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
   private _model : gapi.drive.realtime.Model = null;
   ready : Promise<void> = null;
   private _nStr : number = 0;
+  private _nVec : number = 0;
 }
