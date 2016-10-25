@@ -83,16 +83,17 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
   registerString ( str: ObservableString ) : void {
     this.ready.then( () => {
       //Initialize the collaborativeString
+      let strName = 'collabString' + String(this._nStr++);
       let collabStr : gapi.drive.realtime.CollaborativeString = null;
-      if (this._creator) {
+      collabStr = this._model.getRoot().get(strName);
+      if(!collabStr) {
         collabStr = this._model.createString(str.getText());
-        this._objects.pushBack( collabStr );
-        this._model.getRoot().set("collabString", collabStr );
+        this._model.getRoot().set(strName, collabStr );
       } else {
-        collabStr = this._model.getRoot().get("collabString");
-        this._objects.pushBack( collabStr );
         str.setText( collabStr.getText());
       }
+      this._objects.pushBack( collabStr );
+
       //Add event listeners to the collaborativeString
       collabStr.addEventListener(
         gapi.drive.realtime.EventType.TEXT_INSERTED,
@@ -130,4 +131,5 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
   private _doc : gapi.drive.realtime.Document = null;
   private _model : gapi.drive.realtime.Model = null;
   ready : Promise<void> = null;
+  private _nStr : number = 0;
 }
