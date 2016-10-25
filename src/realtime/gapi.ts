@@ -46,7 +46,7 @@ export function authorize () : void {
 
     let popupAuthorization = function() {
       showDialog({
-        title: 'Proceed to Google Authorization?',
+        title: 'Authorize via Google ID?',
         okText: 'OK'
       }).then( result => {
         if (result.text === 'OK') {

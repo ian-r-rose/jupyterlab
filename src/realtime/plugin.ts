@@ -71,7 +71,7 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): void {
   let commands = app.commands;
 
   commands.addCommand(cmdIds.shareRealtimeFile, {
-    label: 'Share',
+    label: 'Share with...',
     caption: 'Share this file through Google ID',
     execute: ()=> {
       let input = document.createElement('input');
@@ -87,7 +87,7 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): void {
     }
   });
   commands.addCommand(cmdIds.openRealtimeFile, {
-    label: 'Open',
+    label: 'Open from...',
     caption: 'Open a file that has been shared with you',
     execute: ()=> {
       let input = document.createElement('input');
@@ -121,9 +121,13 @@ export
 function shareRealtimeDocument( emailAddress : string) : void {
   if (tracker.currentWidget) {
     let handler = new GoogleRealtimeHandler();
-    //let model : DocumentRegistry.IModel = (tracker.currentWidget as any).context.model;
-    let model = (tracker.currentWidget as any)._content;
-    (model as any).registerCollaborative(handler);
+    let model: any;
+    if (tracker.currentWidget.hasOwnProperty("_content")) {
+      model = (tracker.currentWidget as any)._content;
+    } else {
+      model = (tracker.currentWidget as any).context.model;
+    }
+    model.registerCollaborative(handler);
     handler.ready.then( () => {
       console.log(handler.fileId);
       createPermissions(handler.fileId, emailAddress);
@@ -134,7 +138,12 @@ function shareRealtimeDocument( emailAddress : string) : void {
 export
 function openRealtimeDocument( fileId: string) : void {
   let handler = new GoogleRealtimeHandler(fileId);
-  let model = (tracker.currentWidget as any)._content;
-  (model as any).registerCollaborative(handler);
+  let model: any;
+  if (tracker.currentWidget.hasOwnProperty("_content")) {
+    model = (tracker.currentWidget as any)._content;
+  } else {
+    model = (tracker.currentWidget as any).context.model;
+  }
+  model.registerCollaborative(handler);
 }
 
