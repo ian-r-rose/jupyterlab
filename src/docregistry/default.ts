@@ -129,7 +129,7 @@ class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
    * Serialize the model to a string.
    */
   toString(): string {
-    return this._text.getText();
+    return this._text.text;
   }
 
   /**
@@ -139,17 +139,17 @@ class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
    * Should emit a [contentChanged] signal.
    */
   fromString(value: string): void {
-    if (this._text.getText() === value) {
+    if (this._text.text === value) {
       return;
     }
-    this._text.setText(value);
+    this._text.text = value;
   }
 
   /**
    * Serialize the model to JSON.
    */
   toJSON(): any {
-    return JSON.stringify(this._text.getText());
+    return JSON.stringify(this._text.text);
   }
 
   /**

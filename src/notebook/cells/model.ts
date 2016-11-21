@@ -156,10 +156,10 @@ class CellModel implements ICellModel, IRealtimeModel {
    */
   constructor(cell?: nbformat.IBaseCell) {
 
-    this._source.changed.connect( (s : any, oldVal : string) => {
+    this._source.changed.connect( (s : ObservableString, args: ObservableString.IChangedArgs) => {
       this.contentChanged.emit(void 0);
-      let newVal : string = s.getText();
-      this.stateChanged.emit({ name: 'source', oldValue : oldVal, newValue : newVal });
+      let newVal : string = s.text;
+      this.stateChanged.emit({ name: 'source', oldValue : '', newValue : newVal });
     });
 
     if (!cell) {
@@ -200,14 +200,14 @@ class CellModel implements ICellModel, IRealtimeModel {
    * The input content of the cell.
    */
   get source(): string {
-    return this._source.getText();
+    return this._source.text;
   }
   set source(newValue: string) {
-    if (this._source.getText() === newValue) {
+    if (this._source.text === newValue) {
       return;
     }
-    let oldValue = this._source.getText();
-    this._source.setText(newValue);
+    let oldValue = this._source.text;
+    this._source.text = newValue;
   }
 
   /**

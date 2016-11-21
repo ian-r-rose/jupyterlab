@@ -87,10 +87,10 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
       let collabStr : gapi.drive.realtime.CollaborativeString = null;
       collabStr = this._model.getRoot().get(strName);
       if(!collabStr) {
-        collabStr = this._model.createString(str.getText());
+        collabStr = this._model.createString(str.text);
         this._model.getRoot().set(strName, collabStr );
       } else {
-        str.setText( collabStr.getText());
+        str.text = collabStr.getText();
       }
       this._objects.pushBack( collabStr );
 
@@ -99,7 +99,7 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
         gapi.drive.realtime.EventType.TEXT_INSERTED,
         (evt : any) => {
           if (!evt.isLocal) {
-            str.setText(collabStr.getText());
+            str.text = collabStr.getText();
           }
         }
       );
@@ -108,13 +108,13 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
         gapi.drive.realtime.EventType.TEXT_DELETED,
         (evt : any) => {
           if (!evt.isLocal) {
-            str.setText(collabStr.getText());
+            str.text = collabStr.getText();
           }
         }
       );
 
       str.changed.connect( (s) => {
-        collabStr.setText(s.getText());
+        collabStr.setText(s.text);
       });
     });
   }
