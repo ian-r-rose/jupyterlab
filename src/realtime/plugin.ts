@@ -121,9 +121,13 @@ export
 function shareRealtimeDocument( emailAddress : string) : void {
   if (tracker.currentWidget) {
     let handler = new GoogleRealtimeHandler();
-    //let model : DocumentRegistry.IModel = (tracker.currentWidget as any).context.model;
-    let model = (tracker.currentWidget as any)._content;
-    (model as any).registerCollaborative(handler);
+    let model: any;
+    if (tracker.currentWidget.hasOwnProperty("_content")) {
+      model = (tracker.currentWidget as any)._content;
+    } else {
+      model = (tracker.currentWidget as any).context.model;
+    }
+    model.registerCollaborative(handler);
     handler.ready.then( () => {
       console.log(handler.fileId);
       createPermissions(handler.fileId, emailAddress);
@@ -134,7 +138,12 @@ function shareRealtimeDocument( emailAddress : string) : void {
 export
 function openRealtimeDocument( fileId: string) : void {
   let handler = new GoogleRealtimeHandler(fileId);
-  let model = (tracker.currentWidget as any)._content;
-  (model as any).registerCollaborative(handler);
+  let model: any;
+  if (tracker.currentWidget.hasOwnProperty("_content")) {
+    model = (tracker.currentWidget as any)._content;
+  } else {
+    model = (tracker.currentWidget as any).context.model;
+  }
+  model.registerCollaborative(handler);
 }
 
