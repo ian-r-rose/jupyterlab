@@ -34,10 +34,6 @@ import {
 } from '../output-area';
 
 import {
-  IRealtimeHandler, IRealtimeModel
-} from '../../realtime/handler';
-
-import {
   ObservableString
 } from '../../common/observablestring';
 
@@ -150,7 +146,7 @@ interface IRawCellModel extends ICellModel {
  * An implementation of the cell model.
  */
 export
-class CellModel implements ICellModel, IRealtimeModel {
+class CellModel implements ICellModel {
   /**
    * Construct a cell model from optional cell content.
    */
@@ -282,11 +278,6 @@ class CellModel implements ICellModel, IRealtimeModel {
     return iter(Object.keys(this._metadata));
   }
 
-  registerCollaborative(handler : IRealtimeHandler) {
-    this._realtime = handler;
-    this._realtime.registerString( this._source) ;
-  }
-
   /**
    * Set the cursor data for a given field.
    */
@@ -308,7 +299,6 @@ class CellModel implements ICellModel, IRealtimeModel {
   private _metadata: { [key: string]: any } = Object.create(null);
   private _cursors: { [key: string]: MetadataCursor } = Object.create(null);
   private _source = new ObservableString('');
-  private _realtime : IRealtimeHandler = null;
 }
 
 

@@ -37,6 +37,10 @@ import {
   showDialog, okButton
 } from '../dialog';
 
+import {
+  RealtimeTextModel
+} from './textmodel'
+
 /**
  * The realtime widget instance tracker.
  */
@@ -119,17 +123,18 @@ function createMenu( app: JupyterLab ) : Menu {
 
 export
 function shareRealtimeDocument( emailAddress : string) : void {
-  if (tracker.currentWidget) {
+  let widget = tracker.currentWidget;
+  if (widget) {
     let handler = new GoogleRealtimeHandler();
-    let model: any;
-    if (tracker.currentWidget.hasOwnProperty("_content")) {
-      model = (tracker.currentWidget as any)._content;
-    } else {
-      model = (tracker.currentWidget as any).context.model;
-    }
-    model.registerCollaborative(handler);
+    let oldModel = (widget as any).context.model;
+    let newModel = new RealtimeTextModel();
+
     handler.ready.then( () => {
-      console.log(handler.fileId);
+      newModel.registerCollaborative(handler);
+      newModel.transferModel(oldModel);
+      oldModel.dispose();
+      (widget as any).context.model = newModel;
+      (widget as any).context = (widget as any).context //trigger context change event;
       createPermissions(handler.fileId, emailAddress);
     });
   }
@@ -138,12 +143,13 @@ function shareRealtimeDocument( emailAddress : string) : void {
 export
 function openRealtimeDocument( fileId: string) : void {
   let handler = new GoogleRealtimeHandler(fileId);
-  let model: any;
-  if (tracker.currentWidget.hasOwnProperty("_content")) {
-    model = (tracker.currentWidget as any)._content;
-  } else {
-    model = (tracker.currentWidget as any).context.model;
-  }
-  model.registerCollaborative(handler);
+  let oldModel = (tracker.currentWidget as any).context.model;
+  let newModel = new RealtimeTextModel();
+
+  handler.ready.then( () => {
+    newModel.registerCollaborative(handler);
+    oldModel.dispose();
+    (tracker.currentWidget as any).context.model = newModel;
+  });
 }
 

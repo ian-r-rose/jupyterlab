@@ -27,10 +27,6 @@ import {
 } from './index';
 
 import {
-  IRealtimeHandler, IRealtimeModel
-} from '../realtime/handler';
-
-import {
   ObservableString
 } from '../common/observablestring';
 
@@ -39,7 +35,7 @@ import {
  * The default implementation of a document model.
  */
 export
-class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
+class DocumentModel implements DocumentRegistry.IModel {
   /**
    * Construct a new document model.
    */
@@ -162,22 +158,11 @@ class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
     this.fromString(JSON.parse(value));
   }
 
-  /**
-   * Describe the model to an existing RealtimeHandler.
-   * Meant to be subclassed by other DocumentModels.
-   */
-  registerCollaborative( realtimeHandler : IRealtimeHandler ) : void {
-    this._realtime = realtimeHandler;
-    this._realtime.registerString( this._text) ;
-  }
-
   private _text = new ObservableString('');
   private _defaultLang = '';
   private _dirty = false;
   private _readOnly = false;
   private _isDisposed = false;
-
-  private _realtime : IRealtimeHandler = null;
 }
 
 // Define the signals for the `DocumentModel` class.

@@ -2,11 +2,15 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
+  clearSignalData, defineSignal, ISignal
+} from 'phosphor/lib/core/signaling';
+
+import {
   createRealtimeDocument, loadRealtimeDocument
 } from './gapi';
 
 import {
-  ObservableString
+  IObservableString, ObservableString
 } from '../common/observablestring';
 
 import {
@@ -24,7 +28,7 @@ declare let gapi : any;
 export
 interface IRealtimeModel {
   /**
-   * Register this object as collaborative.
+   * Register this object as collaborrative.
    */
   registerCollaborative (handler: IRealtimeHandler): void;
 }
@@ -41,13 +45,125 @@ interface IRealtimeHandler {
   /**
    * Include a string in the realtime model.
    */
-  registerString( str : ObservableString ) : void;
+  createString(initialValue?: string) : Promise<IObservableString>;
 }
 
 export
+class GoogleRealtimeString implements IObservableString {
+  constructor(model : any, id : string, initialValue : string) {
+    let strName = 'collabString';
+    let collabStr : gapi.drive.realtime.CollaborativeString = null;
+    collabStr = model.getRoot().get(id);
+    if(!collabStr) {
+      collabStr = model.createString(initialValue);
+      model.getRoot().set(id, collabStr);
+    }
+
+    this._str = collabStr;
+
+    //Add event listeners to the collaborativeString
+    this._str.addEventListener(
+      gapi.drive.realtime.EventType.TEXT_INSERTED,
+      (evt : any) => {
+        this.changed.emit({
+          type : 'insert',
+          start: evt.index,
+          end: evt.index + evt.text.length,
+          value: evt.text
+        });
+      });
+
+    this._str.addEventListener(
+      gapi.drive.realtime.EventType.TEXT_DELETED,
+      (evt : any) => {
+        this.changed.emit({
+          type : 'remove',
+          start: evt.index,
+          end: evt.index + evt.text.length,
+          value: evt.text
+        });
+    });
+  }
+
+  /**
+   * A signal emitted when the string has changed.
+   */
+  changed: ISignal<IObservableString, ObservableString.IChangedArgs>;
+
+  /**
+   * Set the value of the string.
+   */
+  set text( value: string ) {
+    this._str.setText(value);
+    this.changed.emit({
+      type: 'set',
+      start: 0,
+      end: value.length,
+      value: value
+    });
+  }
+
+  /**
+   * Get the value of the string.
+   */
+  get text(): string {
+    return this._str.getText();
+  }
+
+  /**
+   * Insert a substring.
+   *
+   * @param index - The starting index.
+   *
+   * @param text - The substring to insert.
+   */
+  insert(index: number, text: string): void {
+  }
+
+  /**
+   * Remove a substring.
+   *
+   * @param start - The starting index.
+   *
+   * @param end - The ending index.
+   */
+  remove(start: number, end: number): void {
+  }
+
+  /**
+   * Set the ObservableString to an empty string.
+   */
+  clear(): void {
+    this.text = '';
+  }
+
+  /**
+   * Test whether the string has been disposed.
+   */
+  get isDisposed(): boolean {
+    return this._isDisposed;
+  }
+
+  /**
+  /**
+   * Dispose of the resources held by the string.
+   */
+  dispose(): void {
+    if(this._isDisposed) {
+      return;
+    }
+    this._str.removeAllEventListeners();
+    this._isDisposed = true;
+  }
+
+  private _model : gapi.drive.realtime.Model = null;
+  private _str : gapi.drive.realtime.CollaborativeString = null;
+  private _isDisposed : boolean = false;
+}
+
+
+export
 class GoogleRealtimeHandler implements IRealtimeHandler {
-
-
   constructor( fileId : string = '' ) {
     this._objects = 
       new ObservableVector<gapi.drive.realtime.CollaborativeObject>();
@@ -80,41 +196,12 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
     });
   }
 
-  registerString ( str: ObservableString ) : void {
-    this.ready.then( () => {
-      //Initialize the collaborativeString
-      let strName = 'collabString' + String(this._nStr++);
-      let collabStr : gapi.drive.realtime.CollaborativeString = null;
-      collabStr = this._model.getRoot().get(strName);
-      if(!collabStr) {
-        collabStr = this._model.createString(str.text);
-        this._model.getRoot().set(strName, collabStr );
-      } else {
-        str.text = collabStr.getText();
-      }
-      this._objects.pushBack( collabStr );
-
-      //Add event listeners to the collaborativeString
-      collabStr.addEventListener(
-        gapi.drive.realtime.EventType.TEXT_INSERTED,
-        (evt : any) => {
-          if (!evt.isLocal) {
-            str.text = collabStr.getText();
-          }
-        }
-      );
-
-      collabStr.addEventListener(
-        gapi.drive.realtime.EventType.TEXT_DELETED,
-        (evt : any) => {
-          if (!evt.isLocal) {
-            str.text = collabStr.getText();
-          }
-        }
-      );
-
-      str.changed.connect( (s) => {
-        collabStr.setText(s.text);
+  createString (initialValue?: string) : Promise<GoogleRealtimeString> {
+    return new Promise<GoogleRealtimeString>( (resolve,reject) => {
+      this.ready.then( () => {
+        //Create the collaborativeString
+        resolve(new GoogleRealtimeString(
+          this._model, 'collabStr', initialValue||''));
       });
     });
   }
@@ -131,5 +218,7 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
   private _doc : gapi.drive.realtime.Document = null;
   private _model : gapi.drive.realtime.Model = null;
   ready : Promise<void> = null;
-  private _nStr : number = 0;
 }
+
+// Define the signals for the `ObservableString` class.
+defineSignal(GoogleRealtimeString.prototype, 'changed');

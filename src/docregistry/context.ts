@@ -91,6 +91,13 @@ class Context<T extends DocumentRegistry.IModel> implements DocumentRegistry.ICo
   }
 
   /**
+   * Get the model associated with the document.
+   */
+  set model(model: T) {
+    this._model = model;
+  }
+
+  /**
    * The current kernel associated with the document.
    */
   get kernel(): Kernel.IKernel {

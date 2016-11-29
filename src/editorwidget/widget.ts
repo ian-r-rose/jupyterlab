@@ -78,6 +78,23 @@ class EditorWidget extends CodeMirrorWidget {
       lineWrapping: true,
     });
     this.addClass(EDITOR_CLASS);
+    this.context = context;
+  }
+
+  /**
+   * Get the context for the editor widget.
+   */
+  get context(): DocumentRegistry.IContext<DocumentRegistry.IModel> {
+    return this._context;
+  }
+
+  /**
+   * Set the context for the editor widget.
+   *
+   * #### Notes
+   * Changing the context also changes the model for the widget.
+   */
+  set context(context: DocumentRegistry.IContext<DocumentRegistry.IModel>) {
     this._context = context;
     let editor = this.editor;
     let model = context.model;
@@ -112,12 +129,6 @@ class EditorWidget extends CodeMirrorWidget {
     });
   }
 
-  /**
-   * Get the context for the editor widget.
-   */
-  get context(): DocumentRegistry.IContext<DocumentRegistry.IModel> {
-    return this._context;
-  }
 
   private _context: DocumentRegistry.IContext<DocumentRegistry.IModel>;
 }
