@@ -31,7 +31,7 @@ import {
 } from '../realtime/handler';
 
 import {
-  ObservableString
+  ObservableString, IObservableString
 } from '../common/observablestring';
 
 
@@ -45,7 +45,7 @@ class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
    */
   constructor(languagePreference?: string) {
     this._defaultLang = languagePreference || '';
-    this._text.changed.connect( (s) => {
+    this._text.changed.connect( () => {
       this.contentChanged.emit(void 0);
       this.dirty = true;
     });
@@ -168,10 +168,17 @@ class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
    */
   registerCollaborative( realtimeHandler : IRealtimeHandler ) : void {
     this._realtime = realtimeHandler;
-    this._realtime.registerString( this._text) ;
+    this._realtime.createString( this._text.text).then( str => {
+      this._text.dispose();
+      this._text = str;
+      this._text.changed.connect( () => {
+        this.contentChanged.emit(void 0);
+        this.dirty = true;
+      });
+    });
   }
 
-  private _text = new ObservableString('');
+  private _text: IObservableString = new ObservableString('');
   private _defaultLang = '';
   private _dirty = false;
   private _readOnly = false;

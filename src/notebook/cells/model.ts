@@ -38,7 +38,7 @@ import {
 } from '../../realtime/handler';
 
 import {
-  ObservableString
+  ObservableString, IObservableString
 } from '../../common/observablestring';
 
 
@@ -284,7 +284,10 @@ class CellModel implements ICellModel, IRealtimeModel {
 
   registerCollaborative(handler : IRealtimeHandler) {
     this._realtime = handler;
-    this._realtime.registerString( this._source) ;
+    this._realtime.createString( this._source.text ).then( str => {
+      this._source.dispose();
+      this._source = str;
+    });
   }
 
   /**
@@ -307,7 +310,7 @@ class CellModel implements ICellModel, IRealtimeModel {
 
   private _metadata: { [key: string]: any } = Object.create(null);
   private _cursors: { [key: string]: MetadataCursor } = Object.create(null);
-  private _source = new ObservableString('');
+  private _source: IObservableString = new ObservableString('');
   private _realtime : IRealtimeHandler = null;
 }
 
