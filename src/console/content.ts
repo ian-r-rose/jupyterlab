@@ -63,7 +63,7 @@ import {
 
 import {
   IRealtimeHandler, IRealtimeModel
-} from '../realtime/handler';
+} from '../realtime';
 
 /**
  * The class name added to console widgets.

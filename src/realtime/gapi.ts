@@ -32,50 +32,49 @@ export let gapiLoaded = new Promise<void>( (resolve, reject) => {
 
 
 
-export function authorize () : void {
-
-  gapiLoaded.then( () => {
-
-    let handleAuthorization = function (authResult : any) {
-      if (authResult && !authResult.error) {
-        return;
-      } else {
-        popupAuthorization();
-      }
-    }
-
-    let popupAuthorization = function() {
-      showDialog({
-        title: 'Proceed to Google Authorization?',
-        okText: 'OK'
-      }).then( result => {
-        if (result.text === 'OK') {
-          gapi.auth.authorize({
-            client_id: CLIENT_ID,
-            scope: [ FILES_OAUTH_SCOPE, METADATA_OAUTH_SCOPE],
-            immediate: false
-            },
-            handleAuthorization);
+export function authorize () : Promise<void> {
+  return new Promise<void>( (resolve, reject) => {
+    gapiLoaded.then( () => {
+      let handleAuthorization = function (authResult : any) {
+        if (authResult && !authResult.error) {
+          resolve();
         } else {
-          return;
+          popupAuthorization();
         }
-      });
-    }
+      }
 
-    //Attempt to authorize without a popup
-    gapi.auth.authorize({
-         client_id: CLIENT_ID,
-            scope: [
-              FILES_OAUTH_SCOPE,
-              METADATA_OAUTH_SCOPE
-            ],
-            immediate: true
-          }, handleAuthorization);
+      let popupAuthorization = function() {
+        showDialog({
+          title: 'Proceed to Google Authorization?',
+          okText: 'OK'
+        }).then( result => {
+          if (result.text === 'OK') {
+            gapi.auth.authorize({
+              client_id: CLIENT_ID,
+              scope: [ FILES_OAUTH_SCOPE, METADATA_OAUTH_SCOPE],
+              immediate: false
+              },
+              handleAuthorization);
+          } else {
+            reject();
+          }
+        });
+      }
+
+      //Attempt to authorize without a popup
+      gapi.auth.authorize({
+           client_id: CLIENT_ID,
+              scope: [
+                FILES_OAUTH_SCOPE,
+                METADATA_OAUTH_SCOPE
+              ],
+              immediate: true
+            }, handleAuthorization);
+    });
   });
 }
 
 export function createPermissions (fileId: string, emailAddress: string ) : void {
-
   let permissionRequest = {
     'type' : 'user',
     'role' : 'writer',
@@ -94,7 +93,6 @@ export function createPermissions (fileId: string, emailAddress: string ) : void
 }
 
 export function createRealtimeDocument() : Promise<string> {
-
   return new Promise( (resolve, reject) => {
     gapi.client.load('drive', 'v3').then( () => {
       gapi.client.drive.files.create({

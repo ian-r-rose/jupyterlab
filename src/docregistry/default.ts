@@ -28,7 +28,7 @@ import {
 
 import {
   IRealtimeHandler, IRealtimeModel
-} from '../realtime/handler';
+} from '../realtime';
 
 import {
   ObservableString, IObservableString
@@ -168,13 +168,14 @@ class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
    */
   registerCollaborative( realtimeHandler : IRealtimeHandler ) : void {
     this._realtime = realtimeHandler;
-    this._realtime.createString( this._text.text).then( str => {
-      this._text.dispose();
+    this._realtime.createString(this._text.text).then( (str: IObservableString)=>{
+      let oldStr = this._text;
       this._text = str;
       this._text.changed.connect( () => {
         this.contentChanged.emit(void 0);
         this.dirty = true;
       });
+      oldStr.dispose();
     });
   }
 

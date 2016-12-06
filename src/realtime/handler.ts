@@ -17,36 +17,12 @@ import {
   ObservableVector
 } from '../common/observablevector';
 
+import {
+  IRealtimeModel, IRealtimeHandler
+} from './realtime';
+
 declare let gapi : any;
 
-/**
- * Interface for an object which has the ability to be shared via
- * the realtime interface. These objects are required to implement
- * method `registerCollaborative( handler : IRealtimeHandler)`
- * which describes to the handler the members which are realtime-enabled.
- */
-export
-interface IRealtimeModel {
-  /**
-   * Register this object as collaborative.
-   */
-  registerCollaborative (handler: IRealtimeHandler): void;
-}
-
-
-/**
- * Interface for an object that coordinates realtime collaboration between
- * objects. These objects are expected to subscribe to the handler using
- * IRealtimeModel.registerCollaborative( handler : IRealtimeHandller)`.
- * There should be one realtime handler per realtime model.
- */
-export
-interface IRealtimeHandler {
-  /**
-   * Include a string in the realtime model.
-   */
-  createString(initialValue?: string) : Promise<IObservableString>;
-}
 
 export
 class GoogleRealtimeString implements IObservableString {
@@ -153,6 +129,7 @@ class GoogleRealtimeString implements IObservableString {
       return;
     }
     this._str.removeAllEventListeners();
+    clearSignalData(this);
     this._isDisposed = true;
   }
 

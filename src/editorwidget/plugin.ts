@@ -42,6 +42,10 @@ import {
 } from './index';
 
 import {
+  IRealtime
+} from '../realtime';
+
+import {
   DEFAULT_CODEMIRROR_THEME
 } from '../codemirror/widget';
 
@@ -87,7 +91,7 @@ const cmdIds = {
 export
 const editorHandlerProvider: JupyterLabPlugin<IEditorTracker> = {
   id: 'jupyter.services.editor-handler',
-  requires: [IDocumentRegistry, IMainMenu, ICommandPalette, IStateDB],
+  requires: [IDocumentRegistry, IMainMenu, ICommandPalette, IStateDB, IRealtime],
   provides: IEditorTracker,
   activate: activateEditorHandler,
   autoStart: true
@@ -97,7 +101,7 @@ const editorHandlerProvider: JupyterLabPlugin<IEditorTracker> = {
 /**
  * Sets up the editor widget
  */
-function activateEditorHandler(app: JupyterLab, registry: IDocumentRegistry, mainMenu: IMainMenu, palette: ICommandPalette, state: IStateDB): IEditorTracker {
+function activateEditorHandler(app: JupyterLab, registry: IDocumentRegistry, mainMenu: IMainMenu, palette: ICommandPalette, state: IStateDB, realtime: IRealtime): IEditorTracker {
   const factory = new EditorWidgetFactory({
     name: FACTORY,
     fileExtensions: ['*'],
