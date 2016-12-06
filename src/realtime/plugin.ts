@@ -18,34 +18,33 @@ import {
 } from 'phosphor/lib/ui/widget';
 
 import {
-  GoogleRealtimeHandler
-} from './handler';
+  IRealtime, IRealtimeModel
+} from './realtime';
 
 import {
-  authorize, createPermissions
-} from './gapi';
+  GoogleRealtimeHandler
+} from './handler';
 
 import {
   InstanceTracker
 } from '../common/instancetracker';
 
 import {
-  DocumentRegistry
-} from '../docregistry/registry';
-
-import {
   showDialog, okButton
 } from '../dialog';
 
-/**
- * The realtime widget instance tracker.
- */
-const tracker = new InstanceTracker<Widget>();
+import {
+  GoogleRealtime
+} from './googlerealtime';
+
+
+let tracker = new InstanceTracker<Widget>();
 
 export
-const realtimeExtension: JupyterLabPlugin<void> = {
-  id: 'jupyter.extensions.realtime',
+const realtimeProvider: JupyterLabPlugin<IRealtime> = {
+  id: 'jupyter.services.realtime',
   requires: [IMainMenu],
+  provides: IRealtime,
   activate: activateRealtime,
   autoStart: true
 };
@@ -55,7 +54,7 @@ const cmdIds = {
   openRealtimeFile : 'realtime:open'
 };
 
-function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): void {
+function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): IRealtime {
 
   // Sync tracker with currently focused widget.
   app.shell.currentChanged.connect((sender, args) => {
@@ -65,43 +64,29 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): void {
     tracker.sync(args.newValue);
   });
 
-  authorize();
+  let realtime = new GoogleRealtime();
 
   mainMenu.addMenu(createMenu(app), {rank: 60});
   let commands = app.commands;
 
   commands.addCommand(cmdIds.shareRealtimeFile, {
     label: 'Share',
-    caption: 'Share this file through Google ID',
+    caption: 'Share this file',
     execute: ()=> {
-      let input = document.createElement('input');
-      showDialog({
-        title: 'Email address...',
-        body: input,
-        okText: 'SHARE'
-      }).then(result => {
-        if (result.text === 'SHARE') {
-          shareRealtimeDocument(input.value);
-        }
-      });
+      let model = getRealtimeModel();
+      if (model) realtime.shareDocument(model);
     }
   });
   commands.addCommand(cmdIds.openRealtimeFile, {
     label: 'Open',
     caption: 'Open a file that has been shared with you',
     execute: ()=> {
-      let input = document.createElement('input');
-      showDialog({
-        title: 'File ID...',
-        body: input,
-        okText: 'OPEN'
-      }).then(result => {
-        if (result.text === 'OPEN') {
-          openRealtimeDocument( input.value);
-        }
-      });
+      let model = getRealtimeModel();
+      if(model) realtime.openSharedDocument(model);
     }
   });
+
+  return realtime;
 }
 
 
@@ -117,33 +102,15 @@ function createMenu( app: JupyterLab ) : Menu {
   return menu;
 }
 
-export
-function shareRealtimeDocument( emailAddress : string) : void {
-  if (tracker.currentWidget) {
-    let handler = new GoogleRealtimeHandler();
-    let model: any;
-    if (tracker.currentWidget.hasOwnProperty("_content")) {
-      model = (tracker.currentWidget as any)._content;
+function getRealtimeModel(): IRealtimeModel {
+  let model: IRealtimeModel = null;
+  let widget = tracker.currentWidget;
+  if (widget) {
+    if (widget.hasOwnProperty("_content")) {
+      model = (widget as any)._content;
     } else {
-      model = (tracker.currentWidget as any).context.model;
+      model = (widget as any).context.model;
     }
-    model.registerCollaborative(handler);
-    handler.ready.then( () => {
-      console.log(handler.fileId);
-      createPermissions(handler.fileId, emailAddress);
-    });
   }
+  return model as IRealtimeModel;
 }
-
-export
-function openRealtimeDocument( fileId: string) : void {
-  let handler = new GoogleRealtimeHandler(fileId);
-  let model: any;
-  if (tracker.currentWidget.hasOwnProperty("_content")) {
-    model = (tracker.currentWidget as any)._content;
-  } else {
-    model = (tracker.currentWidget as any).context.model;
-  }
-  model.registerCollaborative(handler);
-}
-

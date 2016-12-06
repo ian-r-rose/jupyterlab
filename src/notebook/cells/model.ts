@@ -35,7 +35,7 @@ import {
 
 import {
   IRealtimeHandler, IRealtimeModel
-} from '../../realtime/handler';
+} from '../../realtime';
 
 import {
   ObservableString, IObservableString
@@ -284,7 +284,7 @@ class CellModel implements ICellModel, IRealtimeModel {
 
   registerCollaborative(handler : IRealtimeHandler) {
     this._realtime = handler;
-    this._realtime.createString( this._source.text ).then( str => {
+    this._realtime.createString( this._source.text ).then( (str: IObservableString) => {
       this._source.dispose();
       this._source = str;
     });
