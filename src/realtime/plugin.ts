@@ -41,7 +41,7 @@ import {
 let trackerSet = new Set<[InstanceTracker<Widget>, (widget: Widget)=>IRealtimeModel]>();
 
 export
-const realtimeProvider: JupyterLabPlugin<IRealtime> = {
+const plugin: JupyterLabPlugin<IRealtime> = {
   id: 'jupyter.services.realtime',
   requires: [IMainMenu],
   provides: IRealtime,
