@@ -42,8 +42,12 @@ import {
 } from './index';
 
 import {
-  IRealtime
+  IRealtime, IRealtimeModel, addRealtimeTracker
 } from '../realtime';
+
+import {
+  DocumentModel
+} from '../docregistry/default';
 
 import {
   DEFAULT_CODEMIRROR_THEME
@@ -308,6 +312,10 @@ function activateEditorHandler(app: JupyterLab, registry: IDocumentRegistry, mai
     cmdIds.createConsole,
     cmdIds.runCode,
   ].forEach(command => palette.addItem({ command, category: 'Editor' }));
+
+  addRealtimeTracker(tracker, (widget: EditorWidget) => {
+    return widget.context.model as DocumentModel;
+  });
 
   return tracker;
 }

@@ -38,7 +38,7 @@ import {
 } from './googlerealtime';
 
 
-let tracker = new InstanceTracker<Widget>();
+let trackerSet = new Set<[InstanceTracker<Widget>, (widget: Widget)=>IRealtimeModel]>();
 
 export
 const realtimeProvider: JupyterLabPlugin<IRealtime> = {
@@ -56,14 +56,6 @@ const cmdIds = {
 
 function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): IRealtime {
 
-  // Sync tracker with currently focused widget.
-  app.shell.currentChanged.connect((sender, args) => {
-    if(!tracker.has(args.newValue)) {
-      tracker.add(args.newValue);
-    }
-    tracker.sync(args.newValue);
-  });
-
   let realtime = new GoogleRealtime();
 
   mainMenu.addMenu(createMenu(app), {rank: 60});
@@ -73,7 +65,7 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): IRealtime {
     label: 'Share',
     caption: 'Share this file',
     execute: ()=> {
-      let model = getRealtimeModel();
+      let model = getRealtimeModel(app);
       if (model) realtime.shareDocument(model);
     }
   });
@@ -81,7 +73,7 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): IRealtime {
     label: 'Open',
     caption: 'Open a file that has been shared with you',
     execute: ()=> {
-      let model = getRealtimeModel();
+      let model = getRealtimeModel(app);
       if(model) realtime.openSharedDocument(model);
     }
   });
@@ -102,15 +94,18 @@ function createMenu( app: JupyterLab ) : Menu {
   return menu;
 }
 
-function getRealtimeModel(): IRealtimeModel {
+function getRealtimeModel( app: JupyterLab): IRealtimeModel {
   let model: IRealtimeModel = null;
-  let widget = tracker.currentWidget;
-  if (widget) {
-    if (widget.hasOwnProperty("_content")) {
-      model = (widget as any)._content;
-    } else {
-      model = (widget as any).context.model;
+  let widget = app.shell.currentWidget;
+  trackerSet.forEach( ([tracker, getModel]) => {
+    if (tracker.has(widget)) {
+      model = getModel(widget);
     }
-  }
+  });
   return model as IRealtimeModel;
+}
+
+export
+function addRealtimeTracker( tracker: InstanceTracker<Widget>, getModel : (widget: Widget)=>IRealtimeModel ): void {
+  trackerSet.add([tracker, getModel]);
 }
