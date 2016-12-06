@@ -13,6 +13,10 @@ import {
   IChangedArgs
 } from '../common/interfaces';
 
+import {
+  IObservableString, ObservableString
+} from '../common/observablestring';
+
 
 /**
  * An implementation of the code editor model using code mirror.
@@ -81,10 +85,8 @@ export
   /**
    * The text stored in the model.
    */
-  get value(): string {
-    return '';
-  }
-  set value(value: string) {
+  get value(): IObservableString {
+    return this._value;
   }
 
   /**
@@ -134,7 +136,7 @@ export
   }
 
   private _mimetype = '';
-  private _value: string;
+  private _value: IObservableString = new ObservableString();
   private _isDisposed = false;
 }
 

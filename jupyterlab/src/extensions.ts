@@ -5,7 +5,7 @@ module.exports = [
   require('../../lib/about/plugin').plugin,
   require('../../lib/application/plugin').plugin,
   require('../../lib/clipboard/plugin').plugin,
-  require('../../lib/codemirror/plugin').editorServices,
+  require('../../lib/vimeditor/plugin').editorServices,
   require('../../lib/codemirror/plugin').editorCommands,
   require('../../lib/commandlinker/plugin').plugin,
   require('../../lib/commandpalette/plugin').plugin,

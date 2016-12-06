@@ -26,11 +26,11 @@ import {
 } from '../terminal';
 
 import {
-  Widget
+  Widget, ResizeMessage
 } from 'phosphor/lib/ui/widget';
 
 import {
-  sendMessage, Message
+  sendMessage
 } from 'phosphor/lib/core/messaging';
 
 /**
@@ -70,6 +70,7 @@ class VimEditor implements CodeEditor.IEditor {
           content: ['vim\n:set lines=50 columns=100\n']
         });
         this._host = host;
+        this._host.appendChild(this._term.node);
       });
     });
 
@@ -165,10 +166,8 @@ class VimEditor implements CodeEditor.IEditor {
    */
   setSize(dimension: CodeEditor.IDimension | null): void {
     this._ready.then( () => {
-      this._host.appendChild(this._term.node);
-      sendMessage( this._term, new Message('fit-request'));
+      sendMessage(this._term, dimension as ResizeMessage);
     });
-    console.log(dimension);
   }
 
   /**
