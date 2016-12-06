@@ -29,10 +29,6 @@ import {
   Widget, ResizeMessage
 } from 'phosphor/lib/ui/widget';
 
-import {
-  sendMessage
-} from 'phosphor/lib/core/messaging';
-
 /**
  * vim editor.
  */
@@ -65,12 +61,13 @@ class VimEditor implements CodeEditor.IEditor {
       return session.ready.then( () => {
         this._term = new TerminalWidget({background: 'black', color: 'white', fontSize: 13});
         this._term.session = session;
+
         this._term.session.send({
           type: 'stdin',
-          content: ['vim\n:set lines=50 columns=100\n']
+          content: ['vim\n']
         });
-        this._host = host;
-        this._host.appendChild(this._term.node);
+        host.appendChild(this._term.node);
+        this._term.update();
       });
     });
 
@@ -166,7 +163,8 @@ class VimEditor implements CodeEditor.IEditor {
    */
   setSize(dimension: CodeEditor.IDimension | null): void {
     this._ready.then( () => {
-      sendMessage(this._term, dimension as ResizeMessage);
+      (this._term as any)._snapTermSizing();
+      (this._term as any)._resizeTerminal();
     });
   }
 
