@@ -26,7 +26,11 @@ import {
 } from '../terminal';
 
 import {
-  Widget, ResizeMessage
+  sendMessage
+} from 'phosphor/lib/core/messaging';
+
+import {
+  Widget, ResizeMessage, WidgetMessage
 } from 'phosphor/lib/ui/widget';
 
 /**
@@ -67,6 +71,7 @@ class VimEditor implements CodeEditor.IEditor {
           content: ['vim\n']
         });
         host.appendChild(this._term.node);
+        sendMessage(this._term, WidgetMessage.AfterAttach);
         this._term.update();
       });
     });
@@ -142,7 +147,9 @@ class VimEditor implements CodeEditor.IEditor {
    * Brings browser focus to this editor text.
    */
   focus(): void {
-    //(this._term as any)._term.focus();
+    this._ready.then( ()=>{
+      sendMessage(this._term, WidgetMessage.ActivateRequest);
+    });
   }
 
   /**
@@ -163,8 +170,11 @@ class VimEditor implements CodeEditor.IEditor {
    */
   setSize(dimension: CodeEditor.IDimension | null): void {
     this._ready.then( () => {
-      (this._term as any)._snapTermSizing();
-      (this._term as any)._resizeTerminal();
+      let resize = dimension ?
+                   new ResizeMessage(dimension.width, dimension.height)
+                   : ResizeMessage.UnknownSize;
+      sendMessage(this._term, resize);
+      this._term.update();
     });
   }
 
@@ -191,7 +201,7 @@ class VimEditor implements CodeEditor.IEditor {
    * Returns the primary position of the cursor, never `null`.
    */
   getCursorPosition(): CodeEditor.IPosition {
-    return void 0;
+    return {line: 0, column: 0};
   }
 
   /**
@@ -231,7 +241,6 @@ class VimEditor implements CodeEditor.IEditor {
   private _model: VimModel;
   private _term: TerminalWidget;
   private _isDisposed = false;
-  private _host: HTMLElement;
   private _ready: Promise<void>
 
 }
