@@ -14,7 +14,7 @@ import {
 } from '../common/observablestring';
 
 import {
-  ObservableVector
+  IObservableVector, ObservableVector
 } from '../common/observablevector';
 
 import {
@@ -136,65 +136,6 @@ class GoogleRealtimeString implements IObservableString {
   private _model : gapi.drive.realtime.Model = null;
   private _str : gapi.drive.realtime.CollaborativeString = null;
   private _isDisposed : boolean = false;
-}
-
-
-export
-class GoogleRealtimeHandler implements IRealtimeHandler {
-  constructor( fileId : string = '' ) {
-    this._objects = 
-      new ObservableVector<gapi.drive.realtime.CollaborativeObject>();
-    this.ready = new Promise<void>( (resolve, reject) => {
-      if (fileId) {
-        this._fileId = fileId;
-        this._creator = false;
-        loadRealtimeDocument(this._fileId).then( (doc : gapi.drive.realtime.Document) => {
-          this._doc = doc;
-          this._model = this._doc.getModel();
-          resolve();
-        }).catch( () => {
-          console.log("gapi: unable to load realtime document")
-          reject();
-        });
-      } else {
-        this._creator = true;
-        createRealtimeDocument().then( (fileId: string) => {
-          this._fileId = fileId;
-          loadRealtimeDocument(fileId).then( (doc : gapi.drive.realtime.Document) => {
-            this._doc = doc;
-            this._model = this._doc.getModel();
-            resolve();
-          });
-        }).catch( () => {
-          console.log("gapi: unable to create realtime document")
-          reject();
-        });
-      }
-    });
-  }
-
-  createString (initialValue?: string) : Promise<GoogleRealtimeString> {
-    return new Promise<GoogleRealtimeString>( (resolve,reject) => {
-      this.ready.then( () => {
-        //Create the collaborativeString
-        resolve(new GoogleRealtimeString(
-          this._model, 'collabStr', initialValue||''));
-      });
-    });
-  }
-
-  get fileId() : string {
-    return this._fileId;
-  }
-
-
-  private _objects : ObservableVector<gapi.drive.realtime.CollaborativeObject> = null;
-
-  private _creator : boolean;
-  private _fileId : string = '';
-  private _doc : gapi.drive.realtime.Document = null;
-  private _model : gapi.drive.realtime.Model = null;
-  ready : Promise<void> = null;
 }
 
 // Define the signals for the `ObservableString` class.

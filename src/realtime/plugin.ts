@@ -22,10 +22,6 @@ import {
 } from './realtime';
 
 import {
-  GoogleRealtimeHandler
-} from './handler';
-
-import {
   InstanceTracker
 } from '../common/instancetracker';
 

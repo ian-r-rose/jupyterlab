@@ -2,21 +2,27 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  IRealtime, IRealtimeHandler, IRealtimeModel
-} from './realtime';
-
-import {
-  authorize, createPermissions
-} from './gapi';
-
-import {
-  GoogleRealtimeHandler
-} from './handler';
+  clearSignalData, defineSignal, ISignal
+} from 'phosphor/lib/core/signaling';
 
 import {
   showDialog
 } from '../dialog';
 
+import {
+  IRealtime, IRealtimeHandler, IRealtimeModel
+} from './realtime';
+
+import {
+  authorize, createPermissions,
+  createRealtimeDocument, loadRealtimeDocument
+} from './gapi';
+
+import {
+  GoogleRealtimeString
+} from './datastructures';
+
+declare let gapi : any;
 
 export
 class GoogleRealtime implements IRealtime {
@@ -79,4 +85,57 @@ class GoogleRealtime implements IRealtime {
   }
 
   private _authorized: Promise<void> = null;
+}
+
+export
+class GoogleRealtimeHandler implements IRealtimeHandler {
+  constructor( fileId : string = '' ) {
+    this.ready = new Promise<void>( (resolve, reject) => {
+      if (fileId) {
+        this._fileId = fileId;
+        this._creator = false;
+        loadRealtimeDocument(this._fileId).then( (doc : gapi.drive.realtime.Document) => {
+          this._doc = doc;
+          this._model = this._doc.getModel();
+          resolve();
+        }).catch( () => {
+          console.log("gapi: unable to load realtime document")
+          reject();
+        });
+      } else {
+        this._creator = true;
+        createRealtimeDocument().then( (fileId: string) => {
+          this._fileId = fileId;
+          loadRealtimeDocument(fileId).then( (doc : gapi.drive.realtime.Document) => {
+            this._doc = doc;
+            this._model = this._doc.getModel();
+            resolve();
+          });
+        }).catch( () => {
+          console.log("gapi: unable to create realtime document")
+          reject();
+        });
+      }
+    });
+  }
+
+  createString (initialValue?: string) : Promise<GoogleRealtimeString> {
+    return new Promise<GoogleRealtimeString>( (resolve,reject) => {
+      this.ready.then( () => {
+        //Create the collaborativeString
+        resolve(new GoogleRealtimeString(
+          this._model, 'collabStr', initialValue||''));
+      });
+    });
+  }
+
+  get fileId() : string {
+    return this._fileId;
+  }
+
+  private _creator : boolean;
+  private _fileId : string = '';
+  private _doc : gapi.drive.realtime.Document = null;
+  private _model : gapi.drive.realtime.Model = null;
+  ready : Promise<void> = null;
 }

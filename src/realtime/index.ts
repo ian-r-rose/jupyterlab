@@ -3,5 +3,5 @@
 
 export * from './plugin';
 export * from './realtime';
-export * from './handler';
 export * from './googlerealtime';
+export * from './datastructures';
