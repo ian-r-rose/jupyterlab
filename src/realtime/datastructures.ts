@@ -23,6 +23,10 @@ import {
 } from '../common/observablevector';
 
 import {
+  IObservableUndoableVector, ISerializable
+} from '../notebook/common/undo';
+
+import {
   IRealtimeModel, IRealtimeHandler
 } from './realtime';
 
@@ -143,10 +147,9 @@ class GoogleRealtimeString implements IObservableString {
 }
 
 export
-class GoogleRealtimeVector<T> implements IObservableVector<T> {
+class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoableVector<T> {
 
   constructor(model : any, id : string, initialValue: IObservableVector<T>) {
-    let vecName = 'collabVec';
     let collabVec : gapi.drive.realtime.CollaborativeList<T> = null;
     collabVec = model.getRoot().get(id);
     if(!collabVec) {
@@ -222,6 +225,58 @@ class GoogleRealtimeVector<T> implements IObservableVector<T> {
    */
   get isEmpty(): boolean {
     return this.length === 0;
+  }
+
+  /**
+   * Whether the object can redo changes.
+   */
+  get canRedo(): boolean {
+    return false;
+  }
+
+  /**
+   * Whether the object can undo changes.
+   */
+  get canUndo(): boolean {
+    return false;
+  }
+
+  /**
+   * Begin a compound operation.
+   *
+   * @param isUndoAble - Whether the operation is undoable.
+   *   The default is `false`.
+   */
+  beginCompoundOperation(isUndoAble?: boolean): void {
+    //no-op
+  }
+
+  /**
+   * End a compound operation.
+   */
+  endCompoundOperation(): void {
+    //no-op
+  }
+
+  /**
+   * Undo an operation.
+   */
+  undo(): void {
+    //no-op
+  }
+
+  /**
+   * Redo an operation.
+   */
+  redo(): void {
+    //no-op
+  }
+
+  /**
+   * Clear the change stack.
+   */
+  clearUndo(): void {
+    //no-op
   }
 
   /**
