@@ -282,11 +282,14 @@ class CellModel implements ICellModel, IRealtimeModel {
     return iter(Object.keys(this._metadata));
   }
 
-  registerCollaborative(handler : IRealtimeHandler) {
-    this._realtime = handler;
-    this._realtime.createString( this._source.text ).then( (str: IObservableString) => {
-      this._source.dispose();
-      this._source = str;
+  registerCollaborative(handler : IRealtimeHandler): Promise<void> {
+    return new Promise<void>((resolve,reject)=>{
+      this._realtime = handler;
+      this._realtime.createString( this._source.text ).then( (str: IObservableString) => {
+        this._source.dispose();
+        this._source = str;
+        resolve();
+      });
     });
   }
 

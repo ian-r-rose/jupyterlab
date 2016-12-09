@@ -166,16 +166,21 @@ class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
    * Describe the model to an existing RealtimeHandler.
    * Meant to be subclassed by other DocumentModels.
    */
-  registerCollaborative( realtimeHandler : IRealtimeHandler ) : void {
-    this._realtime = realtimeHandler;
-    this._realtime.createString(this._text.text).then( (str: IObservableString)=>{
-      let oldStr = this._text;
-      this._text = str;
-      this._text.changed.connect( () => {
-        this.contentChanged.emit(void 0);
-        this.dirty = true;
+  registerCollaborative( realtimeHandler : IRealtimeHandler ) : Promise<void> {
+    return new Promise<void>((resolve,reject)=>{
+      this._realtime = realtimeHandler;
+      this._realtime.createString(this._text.text).then( (str: IObservableString)=>{
+        let oldStr = this._text;
+        this._text = str;
+        this._text.changed.connect( () => {
+          this.contentChanged.emit(void 0);
+          this.dirty = true;
+        });
+        oldStr.dispose();
+        resolve();
+      }).catch(()=>{
+        console.log("Unable to register document as collaborative");
       });
-      oldStr.dispose();
     });
   }
 

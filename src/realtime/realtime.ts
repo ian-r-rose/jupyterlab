@@ -34,9 +34,9 @@ const IRealtime = new Token<IRealtime>('jupyter.services.realtime');
 export
 interface IRealtime {
 
-  shareDocument(model: IRealtimeModel): void;
+  shareDocument(model: IRealtimeModel): Promise<void>;
 
-  openSharedDocument(model: IRealtimeModel): void;
+  openSharedDocument(model: IRealtimeModel): Promise<void>;
 
   ready: Promise<void>;
 }
@@ -52,7 +52,7 @@ interface IRealtimeModel {
   /**
    * Register this object as collaborative.
    */
-  registerCollaborative (handler: IRealtimeHandler): void;
+  registerCollaborative (handler: IRealtimeHandler): Promise<void>;
 }
 
 

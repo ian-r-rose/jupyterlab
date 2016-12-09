@@ -39,53 +39,83 @@ class GoogleRealtime implements IRealtime {
     return this._authorized;
   }
 
-  shareDocument(model: IRealtimeModel): void { 
-    if( !this._authorized ) {
-      this._authorize();
-    }
-    this._authorized.then( () => {
-      let input = document.createElement('input');
-      showDialog({
-        title: 'Email address...',
-        body: input,
-        okText: 'SHARE'
-      }).then(result => {
-        if (result.text === 'SHARE') {
-          this._shareRealtimeDocument(model, input.value);
-        }
+  shareDocument(model: IRealtimeModel): Promise<void> { 
+    return new Promise<void>( (resolve, reject) => {
+      if( !this._authorized ) {
+        this._authorize();
+      }
+      this._authorized.then( () => {
+        let input = document.createElement('input');
+        showDialog({
+          title: 'Email address...',
+          body: input,
+          okText: 'SHARE'
+        }).then(result => {
+          if (result.text === 'SHARE') {
+            this._shareRealtimeDocument(model, input.value).then( ()=> {
+              resolve();
+            }).catch( ()=>{
+              console.log("Google Realtime: unable to open shared document");
+            });
+          } else {
+            resolve();
+          }
+        });
+      }).catch( () => {
+        console.log("Google Realtime: unable to authorize")
+        reject();
       });
     });
   }
 
-  openSharedDocument(model: IRealtimeModel): void {
-    if( !this._authorized ) {
-      this._authorize();
-    }
-    this._authorized.then( () => {
-      let input = document.createElement('input');
-      showDialog({
-        title: 'File ID...',
-        body: input,
-        okText: 'OPEN'
-      }).then(result => {
-        if (result.text === 'OPEN') {
-          this._openRealtimeDocument(model, input.value);
-        }
+  openSharedDocument(model: IRealtimeModel): Promise<void> {
+    return new Promise<void>((resolve,reject) => {
+      if( !this._authorized ) {
+        this._authorize();
+      }
+      this._authorized.then( () => {
+        let input = document.createElement('input');
+        showDialog({
+          title: 'File ID...',
+          body: input,
+          okText: 'OPEN'
+        }).then(result => {
+          if (result.text === 'OPEN') {
+            this._openRealtimeDocument(model, input.value).then(()=>{
+              resolve();
+            }).catch( ()=>{
+              console.log("Google Realtime: unable to open shared document");
+            });
+          }
+        });
+      }).catch(()=>{
+        console.log("Google Realtime: unable to authorize")
+        reject();
       });
     });
   }
 
-  protected _shareRealtimeDocument( model: IRealtimeModel, emailAddress : string) : void {
-      let handler = new GoogleRealtimeHandler();
+  protected _shareRealtimeDocument( model: IRealtimeModel, emailAddress : string) : Promise<GoogleRealtimeHandler> {
+    return new Promise<GoogleRealtimeHandler>( (resolve, reject) => {
+        let handler = new GoogleRealtimeHandler();
+        model.registerCollaborative(handler);
+        handler.ready.then( () => {
+          createPermissions(handler.fileId, emailAddress).then( () => {
+            resolve(handler);
+          }).catch( () => {
+            console.log("Google Realtime: unable to share document");
+            reject(void 0);
+          });;
+        });
+    });
+  }
+
+  protected _openRealtimeDocument( model: IRealtimeModel, fileId: string) : Promise<GoogleRealtimeHandler> {
+    return new Promise<GoogleRealtimeHandler>( (resolve, reject) => {
+      let handler = new GoogleRealtimeHandler(fileId);
       model.registerCollaborative(handler);
-      handler.ready.then( () => {
-      createPermissions(handler.fileId, emailAddress);
+      resolve(handler);
     });
-  }
-
-  protected _openRealtimeDocument( model: IRealtimeModel, fileId: string) : void {
-    let handler = new GoogleRealtimeHandler(fileId);
-    model.registerCollaborative(handler);
   }
 
   protected _authorize(): void {

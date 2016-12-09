@@ -371,17 +371,22 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
    * Describe the model to an existing RealtimeHandler.
    * Meant to be subclassed by other DocumentModels.
    */
-  registerCollaborative( realtimeHandler : IRealtimeHandler ) : void {
-    this._realtimeHandler = realtimeHandler;
-    this._realtimeHandler.createVector<ICellModel>(this._cellFromJSONFactory, this._cells)
-    .then( (vec: IObservableUndoableVector<ICellModel>)=>{
-      let oldVec = this._cells;
-      this._cells = vec;
-      this._cells.changed.connect( () => {
-        this.contentChanged.emit(void 0);
-        this.dirty = true;
+  registerCollaborative( realtimeHandler : IRealtimeHandler ) : Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this._realtimeHandler = realtimeHandler;
+      this._realtimeHandler.createVector<ICellModel>(this._cellFromJSONFactory, this._cells)
+      .then( (vec: IObservableUndoableVector<ICellModel>)=>{
+        let oldVec = this._cells;
+        this._cells = vec;
+        this._cells.changed.connect( () => {
+          this.contentChanged.emit(void 0);
+          this.dirty = true;
+        });
+        oldVec.dispose();
+        resolve();
+      }).catch( ()=> {
+        console.log("Unable to register notebook as collaborative");
       });
-      oldVec.dispose();
     });
   }
 
