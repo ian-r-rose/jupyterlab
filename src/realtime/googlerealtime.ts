@@ -6,6 +6,10 @@ import {
 } from 'phosphor/lib/core/signaling';
 
 import {
+  JSONObject
+} from 'phosphor/lib/algorithm/json';
+
+import {
   showDialog
 } from '../dialog';
 
@@ -19,8 +23,12 @@ import {
 } from './gapi';
 
 import {
-  GoogleRealtimeString
+  GoogleRealtimeString, GoogleRealtimeVector
 } from './datastructures';
+
+import {
+  IObservableUndoableVector, ISerializable
+} from '../notebook/common/undo';
 
 declare let gapi : any;
 
@@ -125,6 +133,16 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
         //Create the collaborativeString
         resolve(new GoogleRealtimeString(
           this._model, 'collabStr', initialValue||''));
+      });
+    });
+  }
+
+  createVector<T extends ISerializable>(factory: (value: JSONObject)=>T, initialValue?: IObservableUndoableVector<T>) : Promise<IObservableUndoableVector<T>> {
+    return new Promise<GoogleRealtimeVector<T>>( (resolve,reject) => {
+      this.ready.then( () => {
+        //Create the collaborativeString
+        resolve(new GoogleRealtimeVector<T>(
+          factory, this._model, 'collabVec', initialValue));
       });
     });
   }

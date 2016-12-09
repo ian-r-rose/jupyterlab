@@ -6,12 +6,20 @@ import {
 } from 'phosphor/lib/core/token';
 
 import {
+  JSONObject
+} from 'phosphor/lib/algorithm/json';
+
+import {
   InstanceTracker
 } from '../common/instancetracker';
 
 import {
   IObservableString
 } from '../common/observablestring';
+
+import {
+  IObservableUndoableVector, ISerializable
+} from '../notebook/common/undo';
 
 /* tslint:disable */
 /**
@@ -60,4 +68,9 @@ interface IRealtimeHandler {
    * Include a string in the realtime model.
    */
   createString(initialValue?: string) : Promise<IObservableString>;
+
+  /**
+   * Include a string in the realtime model.
+   */
+  createVector<T extends ISerializable>(factory: (value:JSONObject)=>T, initialValue?: IObservableUndoableVector<T>) : Promise<IObservableUndoableVector<T>>;
 }

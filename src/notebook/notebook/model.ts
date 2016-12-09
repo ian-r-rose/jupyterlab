@@ -10,7 +10,7 @@ import {
 } from 'phosphor/lib/algorithm/iteration';
 
 import {
-  deepEqual, JSONValue
+  deepEqual, JSONValue, JSONObject
 } from 'phosphor/lib/algorithm/json';
 
 import {
@@ -45,6 +45,10 @@ import {
 import {
   IObservableUndoableVector, ObservableUndoableVector
 } from '../common/undo';
+
+import {
+  IRealtimeHandler, IRealtimeModel
+} from '../../realtime';
 
 
 /**
@@ -134,14 +138,14 @@ interface ICellModelFactory {
  * An implementation of a notebook Model.
  */
 export
-class NotebookModel extends DocumentModel implements INotebookModel {
+class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeModel {
   /**
    * Construct a new notebook model.
    */
   constructor(options: NotebookModel.IOptions = {}) {
     super(options.languagePreference);
     this._factory = options.factory || NotebookModel.defaultFactory;
-    this._cells = new ObservableUndoableVector<ICellModel>((data: nbformat.IBaseCell) => {
+    this._cellFromJSONFactory = (data: nbformat.IBaseCell) => {
       switch (data.cell_type) {
         case 'code':
           return this._factory.createCodeCell(data);
@@ -150,7 +154,8 @@ class NotebookModel extends DocumentModel implements INotebookModel {
         default:
           return this._factory.createRawCell(data);
       }
-    });
+    }
+    this._cells = new ObservableUndoableVector<ICellModel>(this._cellFromJSONFactory);
     // Add an initial code cell by default.
     this._cells.pushBack(this._factory.createCodeCell());
     this._cells.changed.connect(this._onCellsChanged, this);
@@ -363,6 +368,24 @@ class NotebookModel extends DocumentModel implements INotebookModel {
   }
 
   /**
+   * Describe the model to an existing RealtimeHandler.
+   * Meant to be subclassed by other DocumentModels.
+   */
+  registerCollaborative( realtimeHandler : IRealtimeHandler ) : void {
+    this._realtimeHandler = realtimeHandler;
+    this._realtimeHandler.createVector<ICellModel>(this._cellFromJSONFactory, this._cells)
+    .then( (vec: IObservableUndoableVector<ICellModel>)=>{
+      let oldVec = this._cells;
+      this._cells = vec;
+      this._cells.changed.connect( () => {
+        this.contentChanged.emit(void 0);
+        this.dirty = true;
+      });
+      oldVec.dispose();
+    });
+  }
+
+  /**
    * Set the cursor data for a given field.
    */
   private _setCursorData(name: string, newValue: any): void {
@@ -426,10 +449,12 @@ class NotebookModel extends DocumentModel implements INotebookModel {
 
   private _cells: IObservableUndoableVector<ICellModel> = null;
   private _factory: ICellModelFactory = null;
+  private _cellFromJSONFactory: (value: JSONObject)=>ICellModel = null;
   private _metadata: { [key: string]: any } = Private.createMetadata();
   private _cursors: { [key: string]: MetadataCursor } = Object.create(null);
   private _nbformat = nbformat.MAJOR_VERSION;
   private _nbformatMinor = nbformat.MINOR_VERSION;
+  private _realtimeHandler: IRealtimeHandler = null;
 }
 
 

@@ -48,8 +48,12 @@ import {
 
 import {
   INotebookTracker, NotebookModelFactory, NotebookPanel, NotebookTracker,
-  NotebookWidgetFactory, NotebookActions
+  NotebookWidgetFactory, NotebookActions, NotebookModel
 } from './index';
+
+import {
+  addRealtimeTracker
+} from '../realtime';
 
 
 /**
@@ -209,6 +213,9 @@ function activateNotebookHandler(app: JupyterLab, registry: IDocumentRegistry, s
   // Add main menu notebook menu.
   mainMenu.addMenu(createMenu(app), { rank: 20 });
 
+  addRealtimeTracker(tracker, (widget: NotebookPanel) => {
+    return widget.context.model as NotebookModel;
+  });
   return tracker;
 }
 
