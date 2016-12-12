@@ -33,5 +33,6 @@ module.exports = [
   require('../../lib/shortcuts/plugin').plugin,
   require('../../lib/statedb/plugin').plugin,
   require('../../lib/terminal/plugin').plugin,
-  require('../../lib/realtime/plugin').plugin
+  require('../../lib/realtime/plugin').plugin,
+  require('../../lib/chatbox/plugin').plugin
 ];

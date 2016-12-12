@@ -1,0 +1,13 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|----------------------------------------------------------------------------*/
+
+
+.jp-Chatbox {
+  overflow: auto;
+  padding: 0 4px 4px 4px;
+}
+.jp-Chatbox > div {
+  transform-origin: top left;
+}
