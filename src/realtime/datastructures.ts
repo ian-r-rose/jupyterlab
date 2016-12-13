@@ -371,13 +371,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
   set(index: number, value: T): void {
     let oldValues = [this.at(index)];
     this._vec.set(index, value.toJSON());
-    this.changed.emit({
-      type: 'set',
-      oldIndex: index,
-      newIndex: index,
-      oldValues,
-      newValues: [value]
-    });
   }
 
   /**
@@ -394,15 +387,7 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * No changes.
    */
   pushBack(value: T): number {
-    let len = this._vec.push(value.toJSON());
-    this.changed.emit({
-      type: 'add',
-      oldIndex: -1,
-      newIndex: this.length - 1,
-      oldValues: [],
-      newValues: [value]
-    });
-    return len;
+    return this._vec.push(value.toJSON());
   }
 
   /**
@@ -420,13 +405,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
   popBack(): T {
     let value = this.at(this.length-1);
     this._vec.remove(this.length-1);
-    this.changed.emit({
-      type: 'remove',
-      oldIndex: this.length,
-      newIndex: -1,
-      oldValues: [value],
-      newValues: []
-    });
     return value;
   }
 
@@ -453,13 +431,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    */
   insert(index: number, value: T): number {
     this._vec.insert(index, value.toJSON());
-    this.changed.emit({
-      type: 'add',
-      oldIndex: -1,
-      newIndex: index,
-      oldValues: [],
-      newValues: [value]
-    });
     return this.length;
   }
 
@@ -506,13 +477,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
   removeAt(index: number): T {
     let value = this.at(index);
     this._vec.remove(index);
-    this.changed.emit({
-      type: 'remove',
-      oldIndex: index,
-      newIndex: -1,
-      oldValues: [value],
-      newValues: []
-    });
     return value;
   }
 
@@ -528,13 +492,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
   clear(): void {
     let oldValues = this._fromJSONArray(this._vec.asArray());
     this._vec.clear();
-    this.changed.emit({
-      type: 'remove',
-      oldIndex: 0,
-      newIndex: 0,
-      oldValues,
-      newValues: []
-    });
   }
 
   /**
@@ -562,14 +519,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     } else {
       this.insert(toIndex, value);
     }
-    let arr = [value];
-    this.changed.emit({
-      type: 'move',
-      oldIndex: fromIndex,
-      newIndex: toIndex,
-      oldValues: arr,
-      newValues: arr
-    });
   }
 
   /**
@@ -589,13 +538,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     let newIndex = this.length;
     let newValues = toArray(values);
     each(newValues, value => { this.pushBack(value); });
-    this.changed.emit({
-      type: 'add',
-      oldIndex: -1,
-      newIndex,
-      oldValues: [],
-      newValues
-    });
     return this.length;
   }
 
@@ -624,13 +566,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     let newIndex = index;
     let newValues = toArray(values);
     each(newValues, value => { this.insert(index++, value); });
-    this.changed.emit({
-      type: 'add',
-      oldIndex: -1,
-      newIndex,
-      oldValues: [],
-      newValues
-    });
     return this.length;
   }
 
@@ -657,13 +592,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     for (let i = startIndex; i < endIndex; i++) {
       oldValues.push(this.removeAt(startIndex));
     }
-    this.changed.emit({
-      type: 'remove',
-      oldIndex: startIndex,
-      newIndex: -1,
-      oldValues,
-      newValues: []
-    });
     return this.length;
   }
 
