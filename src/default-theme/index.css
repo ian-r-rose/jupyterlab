@@ -36,6 +36,7 @@
 @import '../running/index.css';
 @import '../terminal/index.css';
 @import '../toolbar/index.css';
+@import '../chatbox/index.css';
 
 /* Theme images */
 @import './images.css';

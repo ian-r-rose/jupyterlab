@@ -62,7 +62,7 @@ class ChatboxWidget extends Widget {
     });
     this._logEditor = new CodeEditorWidget( (host: Widget)=> {
       let editor = factory.newInlineEditor(host.node, {
-        lineNumbers: true,
+        lineNumbers: false,
         readOnly: true,
         wordWrap: true
       });
@@ -74,7 +74,10 @@ class ChatboxWidget extends Widget {
     this._inputPanel.addWidget(this._inputEditor);
     this._content = new ChatboxContent();
     this._content.newEntry.connect((content: ChatboxContent, entry: string)=>{
-      this._logEditor.editor.model.value.text = this._logEditor.editor.model.value.text + '\n'+entry;
+      let logText = this._logEditor.editor.model.value;
+      let node = this._logPanel.node
+      logText.text = logText.text+entry+'\n';
+      node.scrollTop = node.scrollHeight - node.clientHeight;
     });
   }
 
