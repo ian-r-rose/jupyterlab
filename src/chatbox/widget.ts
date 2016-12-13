@@ -77,7 +77,12 @@ class ChatboxWidget extends Widget {
       let logText = this._logEditor.editor.model.value;
       let node = this._logPanel.node
       logText.text = logText.text+entry+'\n';
-      node.scrollTop = node.scrollHeight - node.clientHeight;
+      this._logEditor.editor.setCursorPosition({
+        line: this._logEditor.editor.model.lineCount,
+        column: 0
+      });
+      this._logEditor.editor.focus();
+      this._inputEditor.editor.focus();
     });
   }
 
