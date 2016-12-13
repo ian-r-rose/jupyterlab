@@ -47,7 +47,8 @@ const plugin: JupyterLabPlugin<IRealtime> = {
 
 const cmdIds = {
   shareRealtimeFile : 'realtime:share',
-  openRealtimeFile : 'realtime:open'
+  openRealtimeFile : 'realtime:open',
+  openChatbox : 'chatbox:create-chatbox'
 };
 
 function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): IRealtime {
@@ -86,6 +87,7 @@ function createMenu( app: JupyterLab ) : Menu {
 
   menu.addItem( {command: cmdIds.shareRealtimeFile});
   menu.addItem( {command: cmdIds.openRealtimeFile});
+  menu.addItem( {command: cmdIds.openChatbox});
 
   return menu;
 }

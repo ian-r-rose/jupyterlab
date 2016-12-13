@@ -21,6 +21,10 @@ import {
   IEditorServices
 } from '../codeeditor';
 
+import {
+  IRealtime, IRealtimeModel, addRealtimeTracker
+} from '../realtime';
+
 /**
  * The chatbox file handler extension.
  */
@@ -64,12 +68,13 @@ function activateChatboxWidget(app: JupyterLab, editorServices: IEditorServices,
   commandPalette.addItem({command, category});
   command = 'chatbox:add-entry';
   commands.addCommand(command, {
-    label: 'Push message',
     execute: ()=>{
       let widget = tracker.currentWidget;
       widget.pushMessage();
     },
-    isEnabled: ()=>true
   });
-  commandPalette.addItem({command, category});
+
+  addRealtimeTracker(tracker, (widget: ChatboxWidget) => {
+    return widget.content as IRealtimeModel;
+  });
 }

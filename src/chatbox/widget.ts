@@ -73,10 +73,10 @@ class ChatboxWidget extends Widget {
     this._logPanel.addWidget(this._logEditor);
     this._inputPanel.addWidget(this._inputEditor);
     this._content = new ChatboxContent();
-    this._content.newEntry.connect((content: ChatboxContent, entry: string)=>{
+    this._content.newEntry.connect((content: ChatboxContent, entry: ChatboxContent.Entry)=>{
       let logText = this._logEditor.editor.model.value;
       let node = this._logPanel.node
-      logText.text = logText.text+entry+'\n';
+      logText.text = logText.text+entry.text+'\n';
       this._logEditor.editor.setCursorPosition({
         line: this._logEditor.editor.model.lineCount,
         column: 0
@@ -92,7 +92,7 @@ class ChatboxWidget extends Widget {
 
   pushMessage(): void {
     let input = this._inputEditor.editor.model.value
-    this.content.push(input.text);
+    this.content.push(input.text, '');
     input.text = '';
   }
 
