@@ -16,23 +16,24 @@ const METADATA_OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.metadata';
 const INSTALL_SCOPE = 'https://www.googleapis.com/auth/drive.install'
 const RT_MIMETYPE = 'application/vnd.google-apps.drive-sdk';
 
-export let gapiLoaded = new Promise<void>( (resolve, reject) => {
+export
+let gapiLoaded = new Promise<void>( (resolve, reject) => {
   $.getScript('https://apis.google.com/js/api.js')
-    .done( (script, textStatus)=> {
-      (window as any).gapi.load('auth:client,drive-realtime,drive-share', ()=> {
-        console.log("gapi: loaded onto page");
-        resolve();
-      });
-    })
-    .fail( () => {
-      console.log("gapi: unable to load onto page");
-      reject();
+  .done( (script, textStatus)=> {
+    (window as any).gapi.load('auth:client,drive-realtime,drive-share', ()=> {
+      console.log("gapi: loaded onto page");
+      resolve();
     });
+  }).fail( () => {
+    console.log("gapi: unable to load onto page");
+    reject();
+  });
 });
 
 
 
-export function authorize () : Promise<void> {
+export
+function authorize () : Promise<void> {
   return new Promise<void>( (resolve, reject) => {
     gapiLoaded.then( () => {
       let handleAuthorization = function (authResult : any) {
@@ -53,8 +54,7 @@ export function authorize () : Promise<void> {
               client_id: CLIENT_ID,
               scope: [ FILES_OAUTH_SCOPE, METADATA_OAUTH_SCOPE],
               immediate: false
-              },
-              handleAuthorization);
+            }, handleAuthorization);
           } else {
             reject();
           }
@@ -63,18 +63,15 @@ export function authorize () : Promise<void> {
 
       //Attempt to authorize without a popup
       gapi.auth.authorize({
-           client_id: CLIENT_ID,
-              scope: [
-                FILES_OAUTH_SCOPE,
-                METADATA_OAUTH_SCOPE
-              ],
-              immediate: true
-            }, handleAuthorization);
+        client_id: CLIENT_ID,
+        scope: [FILES_OAUTH_SCOPE, METADATA_OAUTH_SCOPE],
+        immediate: true}, handleAuthorization);
     });
   });
 }
 
-export function createPermissions (fileId: string, emailAddress: string ) : Promise<void> {
+export
+function createPermissions (fileId: string, emailAddress: string ) : Promise<void> {
   return new Promise<void> ((resolve,reject) => {
     let permissionRequest = {
       'type' : 'user',
@@ -95,7 +92,8 @@ export function createPermissions (fileId: string, emailAddress: string ) : Prom
   });
 }
 
-export function createRealtimeDocument() : Promise<string> {
+export
+function createRealtimeDocument() : Promise<string> {
   return new Promise( (resolve, reject) => {
     gapi.client.load('drive', 'v3').then( () => {
       gapi.client.drive.files.create({
@@ -112,7 +110,8 @@ export function createRealtimeDocument() : Promise<string> {
   });
 }
 
-export function loadRealtimeDocument( fileId : string) : Promise<gapi.drive.realtime.Document> {
+export
+function loadRealtimeDocument( fileId : string) : Promise<gapi.drive.realtime.Document> {
   console.log("gapi : attempting to load realtime file " + fileId);
   return new Promise( (resolve, reject) => {
     gapi.drive.realtime.load( fileId, (doc : gapi.drive.realtime.Document ):any => {
