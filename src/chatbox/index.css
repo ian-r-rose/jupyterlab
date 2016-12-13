@@ -8,6 +8,21 @@
   overflow: auto;
   padding: 0 4px 4px 4px;
 }
-.jp-Chatbox > div {
-  transform-origin: top left;
+
+.jp-ChatboxLog {
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  overflow: auto;
+}
+
+.jp-ChatboxInput {
+  height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  overflow: auto;
 }

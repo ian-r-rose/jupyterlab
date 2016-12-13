@@ -48,26 +48,28 @@ function activateChatboxWidget(app: JupyterLab, editorServices: IEditorServices,
   let {commands, keymap} = app;
   let command: string;
   let category: string = 'Realtime';
-  command = 'realtime:create-chatbox';
+  command = 'chatbox:create-chatbox';
   commands.addCommand(command, {
     label: 'Open Chatbox',
     execute: ()=>{
-      let chatbox = new ChatboxWidget();
+      let chatbox = new ChatboxWidget(editorServices);
       chatbox.id = chatbox.id || `chatbox`;
+      chatbox.title.label = 'Chatbox';
+      chatbox.title.closable = true;
       tracker.add(chatbox);
       app.shell.addToMainArea(chatbox);
       app.shell.activateMain(chatbox.id);
     }
   });
   commandPalette.addItem({command, category});
-  command = 'realtime:push-message';
+  command = 'chatbox:add-entry';
   commands.addCommand(command, {
     label: 'Push message',
     execute: ()=>{
-      debugger;
       let widget = tracker.currentWidget;
-      widget.content.push("Hello");
-    }
+      widget.pushMessage();
+    },
+    isEnabled: ()=>true
   });
   commandPalette.addItem({command, category});
 }

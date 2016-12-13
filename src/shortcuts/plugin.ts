@@ -289,6 +289,11 @@ const SHORTCUTS = [
     command: 'image-widget:reset-zoom',
     selector: '.jp-ImageWidget',
     keys: ['0']
+  },
+  {
+    command: 'chatbox:add-entry',
+    selector: '.jp-ChatboxInput',
+    keys: ['Shift Enter']
   }
 ];
 
