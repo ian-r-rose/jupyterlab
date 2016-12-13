@@ -378,10 +378,7 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
       .then( (vec: IObservableUndoableVector<ICellModel>)=>{
         let oldVec = this._cells;
         this._cells = vec;
-        this._cells.changed.connect( () => {
-          this.contentChanged.emit(void 0);
-          this.dirty = true;
-        });
+        this._cells.changed.connect(this._onCellsChanged, this);
         oldVec.dispose();
         resolve();
       }).catch( ()=> {

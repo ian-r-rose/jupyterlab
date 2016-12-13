@@ -363,7 +363,6 @@ class StaticNotebook extends Widget {
    */
   private _onCellsChanged(sender: IObservableVector<ICellModel>, args: ObservableVector.IChangedArgs<ICellModel>) {
     let index = 0;
-    console.log(args.type);
     switch (args.type) {
     case 'add':
       index = args.newIndex;
