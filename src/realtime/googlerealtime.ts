@@ -105,7 +105,7 @@ class GoogleRealtime implements IRealtime {
           }).catch( () => {
             console.log("Google Realtime: unable to share document");
             reject(void 0);
-          });;
+          });
         });
     });
   }

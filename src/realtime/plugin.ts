@@ -34,7 +34,7 @@ import {
 } from './googlerealtime';
 
 
-let trackerSet = new Set<[InstanceTracker<Widget>, (widget: Widget)=>IRealtimeModel]>();
+let trackerSet = new Set<[InstanceTracker<Widget>, (widget: Widget)=>IRealtimeModel, (widget: Widget)=>void]>();
 
 export
 const plugin: JupyterLabPlugin<IRealtime> = {
@@ -62,16 +62,22 @@ function activateRealtime(app: JupyterLab, mainMenu : IMainMenu): IRealtime {
     label: 'Share',
     caption: 'Share this file',
     execute: ()=> {
-      let model = getRealtimeModel(app);
-      if (model) realtime.shareDocument(model);
+      let [widget, model, callback] = getRealtimeModel(app);
+      if (model) {
+        realtime.shareDocument(model)
+        .then( ()=>{callback(widget);} );
+      }
     }
   });
   commands.addCommand(cmdIds.openRealtimeFile, {
     label: 'Open',
     caption: 'Open a file that has been shared with you',
     execute: ()=> {
-      let model = getRealtimeModel(app);
-      if(model) realtime.openSharedDocument(model);
+      let [widget, model, callback] = getRealtimeModel(app);
+      if(model) {
+        realtime.openSharedDocument(model)
+        .then( ()=>{callback(widget);} );
+      }
     }
   });
 
@@ -92,18 +98,20 @@ function createMenu( app: JupyterLab ) : Menu {
   return menu;
 }
 
-function getRealtimeModel( app: JupyterLab): IRealtimeModel {
+function getRealtimeModel( app: JupyterLab): [Widget, IRealtimeModel, (widget: Widget)=>void] {
   let model: IRealtimeModel = null;
+  let callback: (widget: Widget)=>void = null;
   let widget = app.shell.currentWidget;
-  trackerSet.forEach( ([tracker, getModel]) => {
+  trackerSet.forEach( ([tracker, getModel, cb]) => {
     if (tracker.has(widget)) {
       model = getModel(widget);
+      callback = cb;
     }
   });
-  return model as IRealtimeModel;
+  return [widget, model, callback];
 }
 
 export
-function addRealtimeTracker( tracker: InstanceTracker<Widget>, getModel : (widget: Widget)=>IRealtimeModel ): void {
-  trackerSet.add([tracker, getModel]);
+function addRealtimeTracker( tracker: InstanceTracker<Widget>, getModel : (widget: Widget)=>IRealtimeModel, callback: (widget: Widget)=>void = ()=>{} ): void {
+  trackerSet.add([tracker, getModel, callback]);
 }
