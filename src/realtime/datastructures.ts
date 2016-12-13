@@ -181,8 +181,8 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
       (evt : any) => {
         this.changed.emit({
           type: 'remove',
-          oldIndex: -1,
-          newIndex: evt.index,
+          oldIndex: evt.index,
+          newIndex: -1,
           oldValues: this._fromJSONArray(evt.values),
           newValues: []
         });
@@ -452,7 +452,15 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * Comparison is performed using strict `===` equality.
    */
   remove(value: T): number {
-    let index = this._vec.indexOf(value.toJSON());
+    //let index = this._vec.indexOf(value.toJSON());
+    let index = -1;
+    let stringVal = JSON.stringify(value.toJSON());
+    for (let i = 0; i < this.length; i++) {
+      if(stringVal === JSON.stringify(this._vec.get(i))) {
+        index = i;
+        break;
+      }
+    }
     if(index !==-1) this.removeAt(index);
     return index;
   }
