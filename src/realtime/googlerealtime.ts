@@ -113,8 +113,9 @@ class GoogleRealtime implements IRealtime {
   protected _openRealtimeDocument( model: IRealtimeModel, fileId: string) : Promise<GoogleRealtimeHandler> {
     return new Promise<GoogleRealtimeHandler>( (resolve, reject) => {
       let handler = new GoogleRealtimeHandler(fileId);
-      model.registerCollaborative(handler);
-      resolve(handler);
+      model.registerCollaborative(handler).then( ()=>{;
+        resolve(handler);
+      });
     });
   }
 
