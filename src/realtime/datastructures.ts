@@ -11,6 +11,10 @@ import {
 } from 'phosphor/lib/algorithm/json';
 
 import {
+  indexOf
+} from 'phosphor/lib/algorithm/searching';
+
+import {
   clearSignalData, defineSignal, ISignal
 } from 'phosphor/lib/core/signaling';
 
@@ -154,50 +158,79 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
 
   constructor(factory: (value: JSONObject)=>T, model : any, id : string, initialValue?: IObservableVector<T>) {
     this._factory = factory;
-    let collabVec : gapi.drive.realtime.CollaborativeList<JSONObject> = null;
-    collabVec = model.getRoot().get(id);
-    if(!collabVec) {
-      collabVec = model.createList(this._toJSONArray(toArray(initialValue)));
-      model.getRoot().set(id, collabVec);
+
+    //Create and populate the internal vectors
+    this._vec = new ObservableVector<T>();
+    this._gvec = model.getRoot().get(id);
+    if(!this._gvec) {
+      //Does not exist, use initial values
+      this._gvec = model.createList(this._toJSONArray(toArray(initialValue)));
+      model.getRoot().set(id, this._gvec);
+      for(let i=0; i < initialValue.length; i++) {
+        this._vec.pushBack(initialValue.at(i));
+      }
+    } else {
+      //Already exists, populate with that.
+      let vals = this._gvec.asArray();
+      for(let i=0; i < this._gvec.length; i++) {
+        this._vec.pushBack(this._factory(this._gvec.get(i)));
+      }
     }
 
-    this._vec = collabVec;
-
-    //Add event listeners to the collaborativeString
-    this._vec.addEventListener(
+    //Add event listeners to the collaborativeVector
+    this._gvec.addEventListener(
       gapi.drive.realtime.EventType.VALUES_ADDED,
       (evt : any) => {
-        this.changed.emit({
-          type: 'add',
-          oldIndex: -1,
-          newIndex: evt.index,
-          oldValues: [],
-          newValues: this._fromJSONArray(evt.values)
-        });
+        let vals: T[] = this._fromJSONArray(evt.values);
+        if(!evt.isLocal) {
+          this._vec.insertAll(evt.index, vals);
+
+          this.changed.emit({
+            type: 'add',
+            oldIndex: -1,
+            newIndex: evt.index,
+            oldValues: [],
+            newValues: vals
+          });
+        }
       });
 
-    this._vec.addEventListener(
+    this._gvec.addEventListener(
       gapi.drive.realtime.EventType.VALUES_REMOVED,
       (evt : any) => {
-        this.changed.emit({
-          type: 'remove',
-          oldIndex: evt.index,
-          newIndex: -1,
-          oldValues: this._fromJSONArray(evt.values),
-          newValues: []
-        });
+        let vals: T[] = this._fromJSONArray(evt.values);
+        if(!evt.isLocal) {
+          this._vec.removeRange(evt.index, evt.index+vals.length);
+
+          this.changed.emit({
+            type: 'remove',
+            oldIndex: evt.index,
+            newIndex: -1,
+            oldValues: vals,
+            newValues: []
+          });
+        }
       });
 
-    this._vec.addEventListener(
+    this._gvec.addEventListener(
       gapi.drive.realtime.EventType.VALUES_SET,
       (evt : any) => {
-        this.changed.emit({
-          type: 'set',
-          oldIndex: evt.index,
-          newIndex: evt.index,
-          oldValues: this._fromJSONArray(evt.oldValues),
-          newValues: this._fromJSONArray(evt.newValues)
-        });
+        let oldVals: T[] = this._fromJSONArray(evt.oldValues);
+        let newVals: T[] = this._fromJSONArray(evt.newValues);
+        console.log("OOGA")
+        if(!evt.isLocal) {
+          for(let i=0; i<oldVals.length; i++) {
+            this._vec.set(evt.index+i, newVals[i]);
+          }
+
+          this.changed.emit({
+            type: 'set',
+            oldIndex: evt.index,
+            newIndex: evt.index,
+            oldValues: oldVals,
+            newValues: newVals
+          });
+        }
       });
   }
 
@@ -327,9 +360,7 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * No changes.
    */
   iter(): IIterator<T> {
-    ////////////////////
-    return new ArrayIterator<T>
-      (this._fromJSONArray(this._vec.asArray()), 0);
+    return this._vec.iter();
   }
 
   /**
@@ -349,7 +380,7 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * An `index` which is non-integral or out of range.
    */
   at(index: number): T {
-    return this._factory(this._vec.get(index));
+    return this._vec.at(index);
   }
 
   /**
@@ -369,8 +400,18 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * An `index` which is non-integral or out of range.
    */
   set(index: number, value: T): void {
-    let oldValues = [this.at(index)];
-    this._vec.set(index, value.toJSON());
+    let oldVal: T = this._vec.at(index);
+
+    this._vec.set(index, value);
+    this._gvec.set(index, value.toJSON());
+
+    this.changed.emit({
+      type: 'set',
+      oldIndex: index,
+      newIndex: index,
+      oldValues: [oldVal],
+      newValues: [value]
+    });
   }
 
   /**
@@ -387,7 +428,17 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * No changes.
    */
   pushBack(value: T): number {
-    return this._vec.push(value.toJSON());
+    let len = this._vec.pushBack(value);
+    this._gvec.push(value.toJSON());
+
+    this.changed.emit({
+      type: 'add',
+      oldIndex: -1,
+      newIndex: this.length - 1,
+      oldValues: [],
+      newValues: [value]
+    });
+    return len;
   }
 
   /**
@@ -403,8 +454,18 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * Iterators pointing at the removed value are invalidated.
    */
   popBack(): T {
-    let value = this.at(this.length-1);
-    this._vec.remove(this.length-1);
+    let last = this.length-1;
+    let value = this.at(last);
+    this._vec.removeAt(last);
+    this._gvec.remove(last);
+
+    this.changed.emit({
+      type: 'remove',
+      oldIndex: this.length,
+      newIndex: -1,
+      oldValues: [value],
+      newValues: []
+    });
     return value;
   }
 
@@ -430,7 +491,15 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * An `index` which is non-integral.
    */
   insert(index: number, value: T): number {
-    this._vec.insert(index, value.toJSON());
+    this._vec.insert(index, value);
+    this._gvec.insert(index, value.toJSON());
+    this.changed.emit({
+      type: 'add',
+      oldIndex: -1,
+      newIndex: index,
+      oldValues: [],
+      newValues: [value]
+    });
     return this.length;
   }
 
@@ -452,16 +521,8 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * Comparison is performed using strict `===` equality.
    */
   remove(value: T): number {
-    //let index = this._vec.indexOf(value.toJSON());
-    let index = -1;
-    let stringVal = JSON.stringify(value.toJSON());
-    for (let i = 0; i < this.length; i++) {
-      if(stringVal === JSON.stringify(this._vec.get(i))) {
-        index = i;
-        break;
-      }
-    }
-    if(index !==-1) this.removeAt(index);
+    let index = indexOf(this._vec, value);
+    this.removeAt(index);
     return index;
   }
 
@@ -484,7 +545,15 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    */
   removeAt(index: number): T {
     let value = this.at(index);
-    this._vec.remove(index);
+    this._vec.removeAt(index);
+    this._gvec.remove(index);
+    this.changed.emit({
+      type: 'remove',
+      oldIndex: index,
+      newIndex: -1,
+      oldValues: [value],
+      newValues: []
+    });
     return value;
   }
 
@@ -498,8 +567,16 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    * All current iterators are invalidated.
    */
   clear(): void {
-    let oldValues = this._fromJSONArray(this._vec.asArray());
+    let oldValues = toArray(this._vec);
     this._vec.clear();
+    this._gvec.clear();
+    this.changed.emit({
+      type: 'remove',
+      oldIndex: 0,
+       newIndex: 0,
+      oldValues,
+      newValues: []
+    });
   }
 
   /**
@@ -527,6 +604,13 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     } else {
       this.insert(toIndex, value);
     }
+    this.changed.emit({
+      type: 'move',
+      oldIndex: fromIndex,
+      newIndex: toIndex,
+      oldValues: [value],
+      newValues: [value]
+    });
   }
 
   /**
@@ -546,6 +630,13 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     let newIndex = this.length;
     let newValues = toArray(values);
     each(newValues, value => { this.pushBack(value); });
+    this.changed.emit({
+      type: 'add',
+      oldIndex: -1,
+      newIndex,
+      oldValues: [],
+      newValues
+    });
     return this.length;
   }
 
@@ -574,6 +665,13 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     let newIndex = index;
     let newValues = toArray(values);
     each(newValues, value => { this.insert(index++, value); });
+    this.changed.emit({
+      type: 'add',
+      oldIndex: -1,
+      newIndex,
+      oldValues: [],
+      newValues
+    });
     return this.length;
   }
 
@@ -600,6 +698,13 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     for (let i = startIndex; i < endIndex; i++) {
       oldValues.push(this.removeAt(startIndex));
     }
+    this.changed.emit({
+      type: 'remove',
+      oldIndex: startIndex,
+      newIndex: -1,
+      oldValues,
+      newValues: []
+    });
     return this.length;
   }
 
@@ -617,7 +722,8 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
     if(this._isDisposed) {
       return;
     }
-    this._vec.removeAllEventListeners();
+    this._gvec.removeAllEventListeners();
+    this._vec.dispose();
     clearSignalData(this);
     this._isDisposed = true;
   }
@@ -640,7 +746,11 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
 
   private _factory: (value: JSONObject) => T = null;
   private _model : gapi.drive.realtime.Model = null;
-  private _vec : gapi.drive.realtime.CollaborativeList<JSONObject> = null;
+  //Google collaborativeList of JSONObjects that shadows the ObservableVector
+  //which represents the canonical vector of objects.
+  private _gvec : gapi.drive.realtime.CollaborativeList<JSONObject> = null;
+  //Canonical vector of objects.
+  private _vec: ObservableVector<T> = null;
   private _isDisposed : boolean = false;
 }
 
