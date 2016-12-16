@@ -37,12 +37,20 @@ import {
   IOutputAreaModel, OutputAreaModel
 } from '../outputarea';
 
+import {
+  ISynchronizable
+} from '../../realtime';
+
+import {
+  ObservableString, IObservableString
+} from '../../common/observablestring';
+
 
 /**
  * The definition of a model object for a cell.
  */
 export
-interface ICellModel extends CodeEditor.IModel {
+interface ICellModel extends CodeEditor.IModel, ISynchronizable<ICellModel> {
   /**
    * The type of the cell.
    */
@@ -64,6 +72,19 @@ interface ICellModel extends CodeEditor.IModel {
   stateChanged: ISignal<ICellModel, IChangedArgs<any>>;
 
   /**
+<<<<<<< HEAD
+=======
+   * A signal emitted to synchronize with a realtime handler.
+   */
+  synchronizeRequest: ISignal<ICellModel, void>;
+
+  /**
+   * The input content of the cell.
+   */
+  source: string;
+
+  /**
+>>>>>>> Selective merge of implementation-agnostic parts for a realtime
    * Serialize the model to JSON.
    */
   toJSON(): nbformat.ICell;
@@ -166,6 +187,10 @@ class CellModel extends CodeEditor.Model implements ICellModel {
       delete metadata['scrolled'];
     }
     this._metadata = metadata;
+
+    this.stateChanged.connect( ()=> {
+      this.synchronizeRequest.emit(void 0);
+    });
   }
 
   /**
@@ -182,6 +207,11 @@ class CellModel extends CodeEditor.Model implements ICellModel {
    * A signal emitted when a model state changes.
    */
   stateChanged: ISignal<this, IChangedArgs<any>>;
+
+  /**
+   * A signal emitted to synchronize with a realtime handler.
+   */
+  synchronizeRequest: ISignal<ICellModel, void>;
 
   /**
    * Dispose of the resources held by the model.
@@ -299,6 +329,7 @@ namespace CellModel {
 defineSignal(CellModel.prototype, 'contentChanged');
 defineSignal(CellModel.prototype, 'metadataChanged');
 defineSignal(CellModel.prototype, 'stateChanged');
+defineSignal(CellModel.prototype, 'synchronizeRequest');
 
 
 /**

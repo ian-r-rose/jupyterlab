@@ -10,7 +10,7 @@ import {
 } from 'phosphor/lib/algorithm/iteration';
 
 import {
-  deepEqual, JSONValue
+  deepEqual, JSONValue, JSONObject
 } from 'phosphor/lib/algorithm/json';
 
 import {
@@ -45,6 +45,10 @@ import {
 import {
   IObservableUndoableVector, ObservableUndoableVector
 } from '../common/undoablevector';
+
+import {
+  IRealtimeHandler, IRealtimeModel
+} from '../../realtime';
 
 
 /**
@@ -97,7 +101,7 @@ interface INotebookModel extends DocumentRegistry.IModel {
  * An implementation of a notebook Model.
  */
 export
-class NotebookModel extends DocumentModel implements INotebookModel {
+class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeModel {
   /**
    * Construct a new notebook model.
    */
@@ -116,7 +120,7 @@ class NotebookModel extends DocumentModel implements INotebookModel {
         default:
           return factory.createRawCell({ cell });
       }
-    });
+    }
     // Add an initial code cell by default.
     this._cells.pushBack(factory.createCodeCell({}));
     this._cells.changed.connect(this._onCellsChanged, this);
@@ -333,6 +337,26 @@ class NotebookModel extends DocumentModel implements INotebookModel {
   }
 
   /**
+   * Describe the model to an existing RealtimeHandler.
+   * Meant to be subclassed by other DocumentModels.
+   */
+  registerCollaborative( realtimeHandler : IRealtimeHandler ) : Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this._realtimeHandler = realtimeHandler;
+      this._realtimeHandler.createVector<ICellModel>(this._cellFromJSONFactory, this._cells)
+      .then( (vec: IObservableUndoableVector<ICellModel>)=>{
+        let oldVec = this._cells;
+        this._cells = vec;
+        this._cells.changed.connect(this._onCellsChanged, this);
+        oldVec.dispose();
+        resolve();
+      }).catch( ()=> {
+        console.log("Unable to register notebook as collaborative");
+      });
+    });
+  }
+
+  /**
    * Set the cursor data for a given field.
    */
   private _setCursorData(name: string, newValue: any): void {
@@ -400,6 +424,7 @@ class NotebookModel extends DocumentModel implements INotebookModel {
   private _cursors: { [key: string]: MetadataCursor } = Object.create(null);
   private _nbformat = nbformat.MAJOR_VERSION;
   private _nbformatMinor = nbformat.MINOR_VERSION;
+  private _realtimeHandler: IRealtimeHandler = null;
 }
 
 
