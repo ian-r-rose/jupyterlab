@@ -408,6 +408,7 @@ class ConsoleContent extends Widget {
       this.addCell(prompt);
     }
 
+    prompt = this._renderer.createPrompt(this._rendermime, this);
     prompt.mimetype = this._mimetype;
     prompt.addClass(PROMPT_CLASS);
     this._input.addWidget(prompt);
