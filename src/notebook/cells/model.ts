@@ -33,12 +33,20 @@ import {
   OutputAreaModel
 } from '../output-area';
 
+import {
+  ISynchronizable
+} from '../../realtime';
+
+import {
+  ObservableString, IObservableString
+} from '../../common/observablestring';
+
 
 /**
  * The definition of a model object for a cell.
  */
 export
-interface ICellModel extends IDisposable {
+interface ICellModel extends IDisposable, ISynchronizable<ICellModel> {
   /**
    * The type of the cell.
    */
@@ -58,6 +66,11 @@ interface ICellModel extends IDisposable {
    * A signal emitted when a model state changes.
    */
   stateChanged: ISignal<ICellModel, IChangedArgs<any>>;
+
+  /**
+   * A signal emitted to synchronize with a realtime handler.
+   */
+  synchronizeRequest: ISignal<ICellModel, void>;
 
   /**
    * The input content of the cell.
@@ -147,6 +160,13 @@ class CellModel implements ICellModel {
    * Construct a cell model from optional cell content.
    */
   constructor(cell?: nbformat.IBaseCell) {
+
+    this._source.changed.connect( (s : ObservableString, args: ObservableString.IChangedArgs) => {
+      this.contentChanged.emit(void 0);
+      let newVal : string = s.text;
+      this.stateChanged.emit({ name: 'source', oldValue : '', newValue : newVal });
+    });
+
     if (!cell) {
       return;
     }
@@ -164,6 +184,10 @@ class CellModel implements ICellModel {
       delete metadata['scrolled'];
     }
     this._metadata = metadata;
+
+    this.stateChanged.connect( ()=> {
+      this.synchronizeRequest.emit(void 0);
+    });
   }
 
   /**
@@ -182,19 +206,22 @@ class CellModel implements ICellModel {
   stateChanged: ISignal<ICellModel, IChangedArgs<any>>;
 
   /**
+   * A signal emitted to synchronize with a realtime handler.
+   */
+  synchronizeRequest: ISignal<ICellModel, void>;
+
+  /**
    * The input content of the cell.
    */
   get source(): string {
-    return this._source;
+    return this._source.text;
   }
   set source(newValue: string) {
-    if (this._source === newValue) {
+    if (this._source.text === newValue) {
       return;
     }
-    let oldValue = this._source;
-    this._source = newValue;
-    this.contentChanged.emit(void 0);
-    this.stateChanged.emit({ name: 'source', oldValue, newValue });
+    let oldValue = this._source.text;
+    this._source.text = newValue;
   }
 
   /**
@@ -289,7 +316,7 @@ class CellModel implements ICellModel {
 
   private _metadata: { [key: string]: any } = Object.create(null);
   private _cursors: { [key: string]: MetadataCursor } = Object.create(null);
-  private _source = '';
+  private _source: IObservableString = new ObservableString('');
 }
 
 
@@ -297,6 +324,7 @@ class CellModel implements ICellModel {
 defineSignal(CellModel.prototype, 'contentChanged');
 defineSignal(CellModel.prototype, 'metadataChanged');
 defineSignal(CellModel.prototype, 'stateChanged');
+defineSignal(CellModel.prototype, 'synchronizeRequest');
 
 
 /**

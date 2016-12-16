@@ -26,17 +26,29 @@ import {
   DocumentRegistry
 } from './index';
 
+import {
+  IRealtimeHandler, IRealtimeModel
+} from '../realtime';
+
+import {
+  ObservableString, IObservableString
+} from '../common/observablestring';
+
 
 /**
  * The default implementation of a document model.
  */
 export
-class DocumentModel implements DocumentRegistry.IModel {
+class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
   /**
    * Construct a new document model.
    */
   constructor(languagePreference?: string) {
     this._defaultLang = languagePreference || '';
+    this._text.changed.connect( () => {
+      this.contentChanged.emit(void 0);
+      this.dirty = true;
+    });
   }
 
   /**
@@ -117,7 +129,7 @@ class DocumentModel implements DocumentRegistry.IModel {
    * Serialize the model to a string.
    */
   toString(): string {
-    return this._text;
+    return this._text.text;
   }
 
   /**
@@ -127,19 +139,17 @@ class DocumentModel implements DocumentRegistry.IModel {
    * Should emit a [contentChanged] signal.
    */
   fromString(value: string): void {
-    if (this._text === value) {
+    if (this._text.text === value) {
       return;
     }
-    this._text = value;
-    this.contentChanged.emit(void 0);
-    this.dirty = true;
+    this._text.text = value;
   }
 
   /**
    * Serialize the model to JSON.
    */
   toJSON(): any {
-    return JSON.stringify(this._text);
+    return JSON.stringify(this._text.text);
   }
 
   /**
@@ -152,11 +162,38 @@ class DocumentModel implements DocumentRegistry.IModel {
     this.fromString(JSON.parse(value));
   }
 
-  private _text = '';
+  /**
+   * Describe the model to an existing RealtimeHandler.
+   * Meant to be subclassed by other DocumentModels.
+   */
+  registerCollaborative( realtimeHandler : IRealtimeHandler ) : Promise<void> {
+    return new Promise<void>((resolve,reject)=>{
+      this._realtime = realtimeHandler;
+
+      //create a new realtime string
+      this._realtime.createString(this._text.text).then((str: IObservableString)=>{
+        let oldStr = this._text;
+        this._text = str;
+        //connect the realtime string to the correct signals
+        this._text.changed.connect(()=>{
+          this.contentChanged.emit(void 0);
+          this.dirty = true;
+        });
+        //get rid of the old string.
+        oldStr.dispose();
+        resolve();
+      }).catch(()=>{
+        console.log("Unable to register document as collaborative");
+      });
+    });
+  }
+
+  private _text: IObservableString = new ObservableString('');
   private _defaultLang = '';
   private _dirty = false;
   private _readOnly = false;
   private _isDisposed = false;
+  private _realtime : IRealtimeHandler = null;
 }
 
 // Define the signals for the `DocumentModel` class.

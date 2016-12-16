@@ -29,6 +29,14 @@ import {
   IEditorServices
 } from '../codeeditor';
 
+import {
+  IRealtimeModel, addRealtimeTracker
+} from '../realtime';
+
+import {
+  DocumentModel
+} from '../docregistry/default';
+
 /**
  * The class name for all main area portrait tab icons.
  */
@@ -183,6 +191,10 @@ function activateEditorHandler(app: JupyterLab, registry: IDocumentRegistry, lay
       return commands.execute('console:inject', { id, code });
     },
     label: 'Run Code'
+  });
+
+  addRealtimeTracker(tracker, (widget: EditorWidget) => {
+    return widget.context.model as DocumentModel;
   });
 
   return tracker;
