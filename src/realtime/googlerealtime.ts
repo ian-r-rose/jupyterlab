@@ -14,7 +14,8 @@ import {
 } from '../dialog';
 
 import {
-  IRealtime, IRealtimeHandler, IRealtimeModel
+  IRealtime, IRealtimeHandler, IRealtimeModel,
+  ISynchronizable
 } from './realtime';
 
 import {
@@ -27,7 +28,7 @@ import {
 } from './datastructures';
 
 import {
-  IObservableUndoableVector, ISerializable
+  IObservableUndoableVector
 } from '../notebook/common/undo';
 
 declare let gapi : any;
@@ -168,7 +169,7 @@ class GoogleRealtimeHandler implements IRealtimeHandler {
     });
   }
 
-  createVector<T extends ISerializable>(factory: (value: JSONObject)=>T, initialValue?: IObservableUndoableVector<T>) : Promise<IObservableUndoableVector<T>> {
+  createVector<T extends ISynchronizable<T>>(factory: (value: JSONObject)=>T, initialValue?: IObservableUndoableVector<T>) : Promise<IObservableUndoableVector<T>> {
     return new Promise<GoogleRealtimeVector<T>>( (resolve,reject) => {
       this.ready.then( () => {
         //Create the collaborativeString

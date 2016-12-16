@@ -34,7 +34,7 @@ import {
 } from '../output-area';
 
 import {
-  IRealtimeHandler, IRealtimeModel
+  ISynchronizable
 } from '../../realtime';
 
 import {
@@ -46,7 +46,7 @@ import {
  * The definition of a model object for a cell.
  */
 export
-interface ICellModel extends IDisposable {
+interface ICellModel extends IDisposable, ISynchronizable<ICellModel> {
   /**
    * The type of the cell.
    */
@@ -66,6 +66,11 @@ interface ICellModel extends IDisposable {
    * A signal emitted when a model state changes.
    */
   stateChanged: ISignal<ICellModel, IChangedArgs<any>>;
+
+  /**
+   * A signal emitted to synchronize with a realtime handler.
+   */
+  synchronizeRequest: ISignal<ICellModel, void>;
 
   /**
    * The input content of the cell.
@@ -150,7 +155,7 @@ interface IRawCellModel extends ICellModel {
  * An implementation of the cell model.
  */
 export
-class CellModel implements ICellModel, IRealtimeModel {
+class CellModel implements ICellModel {
   /**
    * Construct a cell model from optional cell content.
    */
@@ -179,6 +184,10 @@ class CellModel implements ICellModel, IRealtimeModel {
       delete metadata['scrolled'];
     }
     this._metadata = metadata;
+
+    this.stateChanged.connect( ()=> {
+      this.synchronizeRequest.emit(void 0);
+    });
   }
 
   /**
@@ -195,6 +204,11 @@ class CellModel implements ICellModel, IRealtimeModel {
    * A signal emitted when a model state changes.
    */
   stateChanged: ISignal<ICellModel, IChangedArgs<any>>;
+
+  /**
+   * A signal emitted to synchronize with a realtime handler.
+   */
+  synchronizeRequest: ISignal<ICellModel, void>;
 
   /**
    * The input content of the cell.
@@ -282,17 +296,6 @@ class CellModel implements ICellModel, IRealtimeModel {
     return iter(Object.keys(this._metadata));
   }
 
-  registerCollaborative(handler : IRealtimeHandler): Promise<void> {
-    return new Promise<void>((resolve,reject)=>{
-      this._realtime = handler;
-      this._realtime.createString( this._source.text ).then( (str: IObservableString) => {
-        this._source.dispose();
-        this._source = str;
-        resolve();
-      });
-    });
-  }
-
   /**
    * Set the cursor data for a given field.
    */
@@ -314,7 +317,6 @@ class CellModel implements ICellModel, IRealtimeModel {
   private _metadata: { [key: string]: any } = Object.create(null);
   private _cursors: { [key: string]: MetadataCursor } = Object.create(null);
   private _source: IObservableString = new ObservableString('');
-  private _realtime : IRealtimeHandler = null;
 }
 
 
@@ -322,6 +324,7 @@ class CellModel implements ICellModel, IRealtimeModel {
 defineSignal(CellModel.prototype, 'contentChanged');
 defineSignal(CellModel.prototype, 'metadataChanged');
 defineSignal(CellModel.prototype, 'stateChanged');
+defineSignal(CellModel.prototype, 'synchronizeRequest');
 
 
 /**

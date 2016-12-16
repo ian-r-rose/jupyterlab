@@ -31,11 +31,11 @@ import {
 } from '../common/observablevector';
 
 import {
-  IObservableUndoableVector, ISerializable
+  IObservableUndoableVector,
 } from '../notebook/common/undo';
 
 import {
-  IRealtimeModel, IRealtimeHandler
+  IRealtimeModel, IRealtimeHandler, ISynchronizable
 } from './realtime';
 
 declare let gapi : any;
@@ -154,7 +154,7 @@ class GoogleRealtimeString implements IObservableString {
 }
 
 export
-class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoableVector<T> {
+class GoogleRealtimeVector<T extends ISynchronizable<T>> implements IObservableUndoableVector<T> {
 
   constructor(factory: (value: JSONObject)=>T, model : any, id : string, initialValue?: IObservableVector<T>) {
     this._factory = factory;
@@ -167,13 +167,15 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
       this._gvec = model.createList(this._toJSONArray(toArray(initialValue)));
       model.getRoot().set(id, this._gvec);
       for(let i=0; i < initialValue.length; i++) {
-        this._vec.pushBack(initialValue.at(i));
+        let val: T = initialValue.at(i);
+        this._connectToSync(val);
+        this._vec.pushBack(val);
       }
     } else {
       //Already exists, populate with that.
       let vals = this._gvec.asArray();
       for(let i=0; i < this._gvec.length; i++) {
-        this._vec.pushBack(this._factory(this._gvec.get(i)));
+        this._vec.pushBack(this._createFromJSON(this._gvec.get(i)));
       }
     }
 
@@ -217,7 +219,6 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
       (evt : any) => {
         let oldVals: T[] = this._fromJSONArray(evt.oldValues);
         let newVals: T[] = this._fromJSONArray(evt.newValues);
-        console.log("OOGA")
         if(!evt.isLocal) {
           for(let i=0; i<oldVals.length; i++) {
             this._vec.set(evt.index+i, newVals[i]);
@@ -429,6 +430,7 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
    */
   pushBack(value: T): number {
     let len = this._vec.pushBack(value);
+    this._connectToSync(value);
     this._gvec.push(value.toJSON());
 
     this.changed.emit({
@@ -493,6 +495,7 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
   insert(index: number, value: T): number {
     this._vec.insert(index, value);
     this._gvec.insert(index, value.toJSON());
+    this._connectToSync(value);
     this.changed.emit({
       type: 'add',
       oldIndex: -1,
@@ -738,11 +741,23 @@ class GoogleRealtimeVector<T extends ISerializable> implements IObservableUndoab
   private _fromJSONArray( array: JSONObject[] ): T[] {
     let ret: T[] = [];
     array.forEach( val => {
-      ret.push(this._factory(val));
+      ret.push(this._createFromJSON(val));
     });
     return ret;
   }
 
+  private _connectToSync( value: T ): void {
+    value.synchronizeRequest.connect( ()=>{
+      let index = indexOf(this._vec, value);
+      this._gvec.set(index, value.toJSON());
+    });
+  }
+
+  private _createFromJSON (value: JSONObject): T {
+    let val: T = this._factory(value);
+    this._connectToSync(val);
+    return val;
+  }
 
   private _factory: (value: JSONObject) => T = null;
   private _model : gapi.drive.realtime.Model = null;

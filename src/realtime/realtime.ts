@@ -6,6 +6,10 @@ import {
 } from 'phosphor/lib/core/token';
 
 import {
+  defineSignal, ISignal
+} from 'phosphor/lib/core/signaling';
+
+import {
   JSONObject
 } from 'phosphor/lib/algorithm/json';
 
@@ -72,5 +76,17 @@ interface IRealtimeHandler {
   /**
    * Include a string in the realtime model.
    */
-  createVector<T extends ISerializable>(factory: (value:JSONObject)=>T, initialValue?: IObservableUndoableVector<T>) : Promise<IObservableUndoableVector<T>>;
+  createVector<T extends ISynchronizable<T> >(factory: (value:JSONObject)=>T, initialValue?: IObservableUndoableVector<T>) : Promise<IObservableUndoableVector<T>>;
+}
+
+/**
+ * Interface for an object which is both able to be serialized,
+ * as well as able to signal a request for synchronization
+ * through an IRealtimeHandler. This request may be every time
+ * the object changes, or it may be batched in some way.
+ */
+
+export
+interface ISynchronizable<T> extends ISerializable {
+  synchronizeRequest: ISignal<T, void>;
 }

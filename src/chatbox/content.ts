@@ -6,8 +6,7 @@ import {
 } from 'phosphor/lib/algorithm/json';
 
 import {
-  ISerializable, IObservableUndoableVector,
-  ObservableUndoableVector
+  IObservableUndoableVector, ObservableUndoableVector
 } from '../notebook/common/undo';
 
 import {
@@ -23,7 +22,7 @@ import {
 } from 'phosphor/lib/core/signaling';
 
 import {
-  IRealtimeHandler, IRealtimeModel
+  IRealtimeHandler, IRealtimeModel, ISynchronizable
 } from '../realtime';
 
 
@@ -97,11 +96,13 @@ namespace ChatboxContent {
    * A class for a chat entry.
    */
   export
-  class Entry implements ISerializable {
+  class Entry implements ISynchronizable<Entry> {
     constructor( value: JSONObject ) {
       this.text = (value as any).text;
       this.user = (value as any).user;
     }
+
+    synchronizeRequest: ISignal<Entry, void>;
 
     /**
      * The text of the entry.
