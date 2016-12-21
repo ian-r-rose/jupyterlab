@@ -145,7 +145,7 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
   constructor(options: NotebookModel.IOptions = {}) {
     super(options.languagePreference);
     this._factory = options.factory || NotebookModel.defaultFactory;
-    this._cellFromJSONFactory = (data: nbformat.IBaseCell) => {
+    this._cells = new ObservableUndoableVector<ICellModel>((data: nbformat.IBaseCell) => {
       switch (data.cell_type) {
         case 'code':
           return this._factory.createCodeCell(data);
@@ -154,8 +154,7 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
         default:
           return this._factory.createRawCell(data);
       }
-    }
-    this._cells = new ObservableUndoableVector<ICellModel>(this._cellFromJSONFactory);
+    });
     // Add an initial code cell by default.
     this._cells.pushBack(this._factory.createCodeCell());
     this._cells.changed.connect(this._onCellsChanged, this);
@@ -451,7 +450,6 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
 
   private _cells: IObservableUndoableVector<ICellModel> = null;
   private _factory: ICellModelFactory = null;
-  private _cellFromJSONFactory: (value: JSONObject)=>ICellModel = null;
   private _metadata: { [key: string]: any } = Private.createMetadata();
   private _cursors: { [key: string]: MetadataCursor } = Object.create(null);
   private _nbformat = nbformat.MAJOR_VERSION;
