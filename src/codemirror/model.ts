@@ -192,6 +192,11 @@ namespace Private {
     readonly changed: ISignal<this, ObservableString.IChangedArgs>;
 
     /**
+     * Whether this doc can be linked to another IObservableString.
+     */
+    readonly isLinkable: boolean = false;
+
+    /**
      * Set the value of the string.
      */
     set text(value: string) {
@@ -258,6 +263,22 @@ namespace Private {
      */
     clear(): void {
       this._doc.setValue('');
+    }
+
+    /**
+     * Link to another IObservableString.
+     * Does nothing since this is not a linkable string.
+     */
+    link(str: IObservableString): void {
+      //no-op
+    }
+
+    /**
+     * Unlink from another IObservableString.
+     * Does nothing since this is not a linkable string.
+     */
+    unlink(): void {
+      //no-op
     }
 
     /**
