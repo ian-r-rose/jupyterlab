@@ -30,7 +30,7 @@ import {
 } from '../codeeditor';
 
 import {
-  IRealtimeModel, addRealtimeTracker
+  IRealtime
 } from '../realtime';
 
 import {
@@ -193,8 +193,11 @@ function activateEditorHandler(app: JupyterLab, registry: IDocumentRegistry, lay
     label: 'Run Code'
   });
 
-  addRealtimeTracker(tracker, (widget: EditorWidget) => {
-    return widget.context.model as DocumentModel;
+  //Register this widget tracker with the Realtime services if it exists.
+  app.resolveService(IRealtime).then((realtimeServices: IRealtime)=>{
+    realtimeServices.addTracker(tracker, (widget: EditorWidget) => {
+      return widget.context.model as DocumentModel;
+    });
   });
 
   return tracker;
