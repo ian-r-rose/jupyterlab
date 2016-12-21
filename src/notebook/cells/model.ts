@@ -167,6 +167,10 @@ class CellModel implements ICellModel {
       this.stateChanged.emit({ name: 'source', oldValue : '', newValue : newVal });
     });
 
+    this.stateChanged.connect( ()=> {
+      this.synchronizeRequest.emit(void 0);
+    });
+
     if (!cell) {
       return;
     }
@@ -184,10 +188,6 @@ class CellModel implements ICellModel {
       delete metadata['scrolled'];
     }
     this._metadata = metadata;
-
-    this.stateChanged.connect( ()=> {
-      this.synchronizeRequest.emit(void 0);
-    });
   }
 
   /**
