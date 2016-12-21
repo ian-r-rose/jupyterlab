@@ -120,7 +120,7 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
         default:
           return factory.createRawCell({ cell });
       }
-    }
+    });
     // Add an initial code cell by default.
     this._cells.pushBack(factory.createCodeCell({}));
     this._cells.changed.connect(this._onCellsChanged, this);
