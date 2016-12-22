@@ -170,7 +170,7 @@ class DocumentModel implements DocumentRegistry.IModel, IRealtimeModel {
     return new Promise<void>((resolve,reject)=>{
       this._realtime = realtimeHandler;
       //link to the new realtime string
-      this._realtime.linkString(this._text).then(()=>{
+      this._realtime.linkString(this._text, 'textdoc:text').then(()=>{
         resolve();
       }).catch(()=>{
         console.log("Unable to register document as collaborative");
