@@ -41,6 +41,152 @@ const REFRESH_DURATION = 10000;
 const MIN_REFRESH = 1000;
 
 
+export
+interface IFileBrowserModel extends IDisposable, IPathTracker {
+  /**
+   * A signal emitted when the path changes.
+   */
+  pathChanged: ISignal<this, IChangedArgs<string>>;
+
+  /**
+   * A signal emitted when the directory listing is refreshed.
+   */
+  refreshed: ISignal<this, void>;
+
+  /**
+   * A signal emitted when the running sessions in the directory changes.
+   */
+  sessionsChanged: ISignal<this, void>;
+
+  /**
+   * Get the file path changed signal.
+   */
+  fileChanged: ISignal<this, Contents.IChangedArgs>;
+
+  /**
+   * A signal emitted when the file browser model loses connection.
+   */
+  connectionFailure: ISignal<this, Error>;
+
+  /**
+   * Get the current path.
+   */
+  readonly path: string;
+
+  /**
+   * Get whether the model is disposed.
+   */
+  readonly isDisposed: boolean;
+
+  /**
+   * Get the kernel spec models.
+   */
+  readonly specs: Kernel.ISpecModels | null;
+
+  /**
+   * Dispose of the resources held by the model.
+   */
+  dispose(): void;
+
+  /**
+   * Create an iterator over the model's items.
+   *
+   * @returns A new iterator over the model's items.
+   */
+  items(): IIterator<Contents.IModel>;
+
+  /**
+   * Create an iterator over the active sessions in the directory.
+   *
+   * @returns A new iterator over the model's active sessions.
+   */
+  sessions(): IIterator<Session.IModel>;
+
+  /**
+   * Change directory.
+   *
+   * @param path - The path to the file or directory.
+   *
+   * @returns A promise with the contents of the directory.
+   */
+  cd(newValue: string): Promise<void>;
+
+  /**
+   * Copy a file.
+   *
+   * @param fromFile - The path of the original file.
+   *
+   * @param toDir - The path to the target directory.
+   *
+   * @returns A promise which resolves to the contents of the file.
+   */
+  copy(fromFile: string, toDir: string): Promise<Contents.IModel>;
+
+  /**
+   * Delete a file.
+   *
+   * @param: path - The path to the file to be deleted.
+   *
+   * @returns A promise which resolves when the file is deleted.
+   */
+  deleteFile(path: string): Promise<void>;
+
+  /**
+   * Download a file.
+   *
+   * @param - path - The path of the file to be downloaded.
+   */
+  download(path: string): void;
+
+  /**
+   * Create a new untitled file or directory in the current directory.
+   *
+   * @param type - The type of file object to create. One of
+   *  `['file', 'notebook', 'directory']`.
+   *
+   * @param ext - Optional extension for `'file'` types (defaults to `'.txt'`).
+   *
+   * @returns A promise containing the new file contents model.
+   */
+  newUntitled(options: Contents.ICreateOptions): Promise<Contents.IModel>;
+
+  /**
+   * Rename a file or directory.
+   *
+   * @param path - The path to the original file.
+   *
+   * @param newPath - The path to the new file.
+   *
+   * @returns A promise containing the new file contents model.
+   */
+  rename(path: string, newPath: string): Promise<Contents.IModel>;
+
+  /**
+   * Upload a `File` object.
+   *
+   * @param file - The `File` object to upload.
+   *
+   * @param overwrite - Whether to overwrite an existing file.
+   *
+   * @returns A promise containing the new file contents model.
+   *
+   * #### Notes
+   * This will fail to upload files that are too big to be sent in one
+   * request to the server.
+   */
+  upload(file: File, overwrite?: boolean): Promise<Contents.IModel>;
+
+  /**
+   * Shut down a session by session id.
+   *
+   * @param id - The id of the session.
+   *
+   * @returns A promise that resolves when the action is complete.
+   */
+  shutdown(id: string): Promise<void>;
+}
+
+
 /**
  * An implementation of a file browser model.
  *
@@ -49,7 +195,7 @@ const MIN_REFRESH = 1000;
  * the current directory.  Supports `'../'` syntax.
  */
 export
-class FileBrowserModel implements IDisposable, IPathTracker {
+class FileBrowserModel implements IFileBrowserModel {
   /**
    * Construct a new file browser model.
    */
