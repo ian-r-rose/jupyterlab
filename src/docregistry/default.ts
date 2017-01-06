@@ -38,10 +38,6 @@ import {
   IRealtimeHandler, IRealtimeModel
 } from '../realtime';
 
-import {
-  ObservableString, IObservableString
-} from '../common/observablestring';
-
 
 /**
  * The default implementation of a document model.
@@ -167,7 +163,7 @@ class DocumentModel extends CodeEditor.Model implements DocumentRegistry.ICodeMo
     return new Promise<void>((resolve,reject)=>{
       this._realtime = realtimeHandler;
       //link to the new realtime string
-      this._realtime.linkString(this._text, 'textdoc:text').then(()=>{
+      this._realtime.linkString(this.value, 'textdoc:text').then(()=>{
         resolve();
       }).catch(()=>{
         console.log("Unable to register document as collaborative");
@@ -179,7 +175,6 @@ class DocumentModel extends CodeEditor.Model implements DocumentRegistry.ICodeMo
   private _defaultLang = '';
   private _dirty = false;
   private _readOnly = false;
-  private _isDisposed = false;
   private _realtime : IRealtimeHandler = null;
 }
 

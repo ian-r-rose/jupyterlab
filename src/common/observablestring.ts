@@ -106,7 +106,7 @@ class ObservableString implements IObservableString {
    * Set the value of the string.
    */
   set text( value: string ) {
-    if(!this.parent) {
+    if(!this._parent) {
       if (value.length === this._text.length && value === this._text) {
         return;
       }

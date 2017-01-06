@@ -41,10 +41,6 @@ import {
   ISynchronizable
 } from '../../realtime';
 
-import {
-  ObservableString, IObservableString
-} from '../../common/observablestring';
-
 
 /**
  * The definition of a model object for a cell.
