@@ -177,6 +177,13 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
   }
 
   /**
+   * The realtime handler associated with the notebook.
+   */
+  get realtimeHandler(): IRealtimeHandler {
+   return this._realtimeHandler;
+  }
+
+  /**
    * Dispose of the resources held by the model.
    */
   dispose(): void {

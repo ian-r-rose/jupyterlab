@@ -54,7 +54,7 @@ function activateRealtimeMenu(app: JupyterLab, mainMenu : IMainMenu): void {
         let widget = app.shell.currentWidget;
         let model = realtimeServices.checkTrackers(widget);
         if (model) {
-          realtimeServices.shareDocument(model);
+          realtimeServices.addCollaborator(model);
         }
       }
     });
@@ -65,7 +65,7 @@ function activateRealtimeMenu(app: JupyterLab, mainMenu : IMainMenu): void {
         let widget = app.shell.currentWidget;
         let model = realtimeServices.checkTrackers(widget);
         if(model) {
-          realtimeServices.openSharedDocument(model);
+          realtimeServices.shareModel(model);
         }
       }
     });
