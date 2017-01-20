@@ -138,11 +138,11 @@ class OutputAreaModel implements IOutputAreaModel {
     if (this.isDisposed) {
       return;
     }
+    clearSignalData(this);
     let list = this.list;
     this.list = null;
     list.clear();
     this.disposed.emit(void 0);
-    clearSignalData(this);
   }
 
   /**
