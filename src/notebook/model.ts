@@ -206,7 +206,9 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
       cursors[key].dispose();
     }
     this._metadata = null;
-    this._realtimeHandler.dispose();
+    if(this._realtimeHandler) {
+      this._realtimeHandler.dispose();
+    }
     super.dispose();
   }
 
