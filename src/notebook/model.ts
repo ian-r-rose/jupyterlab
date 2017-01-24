@@ -48,7 +48,7 @@ import {
 
 import {
   IRealtimeHandler, IRealtimeModel
-} from '../../realtime';
+} from '../common/realtime';
 
 
 /**

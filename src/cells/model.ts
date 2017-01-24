@@ -39,7 +39,7 @@ import {
 
 import {
   ISynchronizable
-} from '../../realtime';
+} from '../common/realtime';
 
 
 /**
