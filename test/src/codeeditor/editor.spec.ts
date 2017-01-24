@@ -4,13 +4,17 @@
 import expect = require('expect.js');
 
 import {
+  ObservableMap
+} from '../../../lib/common/observablemap';
+
+import {
   CodeEditor
 } from '../../../lib/codeeditor';
 
 
 describe('CodeEditor.Selections', () => {
 
-  let selections: CodeEditor.Selections;
+  let selections: ObservableMap<CodeEditor.ITextSelection[]>;
   let defaultSelections = [
     {
       uuid: 'foo',
@@ -25,7 +29,7 @@ describe('CodeEditor.Selections', () => {
   ];
 
   beforeEach(() => {
-    selections = new CodeEditor.Selections();
+    selections = new ObservableMap<CodeEditor.ITextSelection[]>();
   });
 
   describe('#changed', () => {
@@ -34,12 +38,12 @@ describe('CodeEditor.Selections', () => {
       let called = false;
       selections.changed.connect((sender, args) => {
         expect(sender).to.be(selections);
-        expect(args.uuid).to.be('foo');
-        expect(args.oldSelections).to.eql([]);
-        expect(args.newSelections).to.eql(defaultSelections);
+        expect(args.key).to.be('foo');
+        expect(args.oldValue).to.eql(undefined);
+        expect(args.newValue).to.eql(defaultSelections);
         called = true;
       });
-      selections.setSelections('foo', defaultSelections);
+      selections.set('foo', defaultSelections);
       expect(called).to.be(true);
     });
 
@@ -48,10 +52,10 @@ describe('CodeEditor.Selections', () => {
   describe('#uuids', () => {
 
     it('should get the uuids of the selection owners', () => {
-      expect(selections.uuids).to.eql([]);
-      selections.setSelections('foo', defaultSelections);
-      selections.setSelections('bar', defaultSelections);
-      expect(selections.uuids).to.eql(['foo', 'bar']);
+      expect(selections.keys()).to.eql([]);
+      selections.set('foo', defaultSelections);
+      selections.set('bar', defaultSelections);
+      expect(selections.keys()).to.eql(['foo', 'bar']);
     });
 
   });
@@ -59,8 +63,8 @@ describe('CodeEditor.Selections', () => {
   describe('#getSelections()', () => {
 
     it('should get the selections for the selection owner', () => {
-      selections.setSelections('foo', defaultSelections);
-      expect(selections.getSelections('foo')).to.eql(defaultSelections);
+      selections.set('foo', defaultSelections);
+      expect(selections.get('foo')).to.eql(defaultSelections);
     });
 
   });
@@ -68,10 +72,10 @@ describe('CodeEditor.Selections', () => {
   describe('#setSelections()', () => {
 
     it('should set the selections for the selection owner', () => {
-      selections.setSelections('foo', defaultSelections);
-      expect(selections.getSelections('foo')).to.eql(defaultSelections);
-      selections.setSelections('foo', []);
-      expect(selections.getSelections('foo')).to.eql([]);
+      selections.set('foo', defaultSelections);
+      expect(selections.get('foo')).to.eql(defaultSelections);
+      selections.set('foo', []);
+      expect(selections.get('foo')).to.eql([]);
     });
 
   });
@@ -158,7 +162,7 @@ describe('CodeEditor.Model', () => {
   describe('#selections', () => {
 
     it('should be the selections associated with the model', () => {
-      expect(model.selections.uuids.length).to.be(0);
+      expect(model.selections.keys().length).to.be(0);
     });
 
   });
