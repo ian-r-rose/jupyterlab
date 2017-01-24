@@ -36,6 +36,14 @@ interface IObservableString extends IDisposable {
   readonly isLinkable: boolean;
 
   /**
+   * Whether this string is linked to another.
+   */
+  readonly isLinked: boolean;
+
+  /**
+   * The number of key-value pairs in the map.
+   */
+  /**
    * Insert a substring.
    *
    * @param index - The starting index.
@@ -103,10 +111,17 @@ class ObservableString implements IObservableString {
   readonly isLinkable: boolean = true;
 
   /**
+   * Whether this map is linked to another.
+   */
+  get isLinked(): boolean {
+    return this._parent !== null;
+  }
+
+  /**
    * Set the value of the string.
    */
   set text( value: string ) {
-    if(!this._parent) {
+    if(!this.isLinked) {
       if (value.length === this._text.length && value === this._text) {
         return;
       }
@@ -126,7 +141,7 @@ class ObservableString implements IObservableString {
    * Get the value of the string.
    */
   get text(): string {
-    if(!this._parent) return this._text;
+    if(!this.isLinked) return this._text;
     else return this._parent.text;
   }
 
@@ -138,7 +153,7 @@ class ObservableString implements IObservableString {
    * @param text - The substring to insert.
    */
   insert(index: number, text: string): void {
-    if(!this._parent) {
+    if(!this.isLinked) {
       this._text = this._text.slice(0, index) +
                    text +
                    this._text.slice(index);
@@ -161,7 +176,7 @@ class ObservableString implements IObservableString {
    * @param end - The ending index.
    */
   remove(start: number, end: number): void {
-    if(!this._parent) {
+    if(!this.isLinked) {
       let oldValue: string = this._text.slice(start, end);
       this._text = this._text.slice(0, start) +
                    this._text.slice(end);
@@ -198,7 +213,7 @@ class ObservableString implements IObservableString {
    * Unlink the string from its parent string.
    */
   unlink(): void {
-    if(this._parent) {
+    if(this.isLinked) {
       if(!this._parent.isDisposed) {
         this._text = this._parent.text;
       }
@@ -229,7 +244,7 @@ class ObservableString implements IObservableString {
     if (this._isDisposed) {
       return;
     }
-    if(this._parent) {
+    if(this.isLinked) {
       this.unlink();
     }
     clearSignalData(this);
