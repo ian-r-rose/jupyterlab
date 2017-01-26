@@ -114,13 +114,6 @@ class DocumentModel extends CodeEditor.Model implements DocumentRegistry.ICodeMo
   }
 
   /**
-   * The realtime handler associated with the document.
-   */
-  get realtimeHandler(): IRealtimeHandler {
-    return this._realtime;
-  }
-
-  /**
    * Serialize the model to a string.
    */
   toString(): string {
@@ -163,41 +156,9 @@ class DocumentModel extends CodeEditor.Model implements DocumentRegistry.ICodeMo
   }
 
   /**
-   * Describe the model to an existing RealtimeHandler.
-   * Meant to be overridden by other DocumentModels.
-   */
-  registerCollaborative( realtimeHandler : IRealtimeHandler ) : Promise<void> {
-    return new Promise<void>((resolve,reject)=>{
-      this._realtime = realtimeHandler;
-      //link to the new realtime string
-      let stringPromise =
-        this._realtime.linkString(this.value, 'textdoc:text');
-      let cursorPromise =
-        this._realtime.linkMap(this.selections, 'textdoc:cursors');
-      this._realtime.collaborators.changed.connect((collaborators, change)=>{
-        //if there are selections corresponding to non-collaborators,
-        //they are stale and should be removed.
-        for(let key of this.selections.keys()) {
-          if(!collaborators.has(key)) {
-            this.selections.delete(key);
-          }
-        }
-      });
-      Promise.all([stringPromise, cursorPromise]).then(()=>{
-        resolve();
-      }).catch(()=>{
-        console.log("Unable to register document as collaborative");
-      });
-    });
-  }
-
-  /**
    * Dispose of the resources held by the model.
    */
   dispose(): void {
-    if(this._realtime) {
-      this._realtime.dispose();
-    }
     super.dispose();
   }
 
@@ -205,7 +166,6 @@ class DocumentModel extends CodeEditor.Model implements DocumentRegistry.ICodeMo
   private _defaultLang = '';
   private _dirty = false;
   private _readOnly = false;
-  private _realtime : IRealtimeHandler = null;
 }
 
 
