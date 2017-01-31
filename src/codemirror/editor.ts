@@ -691,7 +691,7 @@ class CodeMirrorEditor implements CodeEditor.IEditor {
         (this.model as any).realtimeHandler.collaborators.get(uuid);
       color = collaborator ? collaborator.color || '' : '';
       let me: any =
-        (this.model as any).realtimeHandler.collaborators.get((this.model as any).realtimeHandler.localCollaborator);
+        (this.model as any).realtimeHandler.collaborators.get((this.model as any).realtimeHandler.localCollaborator.sessionId);
       let myColor: string = me ? me.color || '' : '';
 
       if(myColor) {
