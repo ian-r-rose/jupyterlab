@@ -64,11 +64,6 @@ interface ICellModel extends CodeEditor.IModel {
   stateChanged: ISignal<ICellModel, IChangedArgs<any>>;
 
   /**
-   * A signal emitted to synchronize with a realtime handler.
-   */
-  synchronizeRequest: ISignal<ICellModel, void>;
-
-  /**
    * Serialize the model to JSON.
    */
   toJSON(): nbformat.ICell;
@@ -155,16 +150,6 @@ class CellModel extends CodeEditor.Model implements ICellModel {
     this.value.changed.connect(this._onValueChanged, this);
     let cell = options.cell;
 
-    this.stateChanged.connect( ()=> {
-      this.synchronizeRequest.emit(void 0);
-    });
-    this.contentChanged.connect( ()=> {
-      this.synchronizeRequest.emit(void 0);
-    });
-    this.metadataChanged.connect( ()=> {
-      this.synchronizeRequest.emit(void 0);
-    });
-
     if (!cell) {
       return;
     }
@@ -198,11 +183,6 @@ class CellModel extends CodeEditor.Model implements ICellModel {
    * A signal emitted when a model state changes.
    */
   stateChanged: ISignal<this, IChangedArgs<any>>;
-
-  /**
-   * A signal emitted to synchronize with a realtime handler.
-   */
-  synchronizeRequest: ISignal<ICellModel, void>;
 
   /**
    * Dispose of the resources held by the model.
@@ -320,7 +300,6 @@ namespace CellModel {
 defineSignal(CellModel.prototype, 'contentChanged');
 defineSignal(CellModel.prototype, 'metadataChanged');
 defineSignal(CellModel.prototype, 'stateChanged');
-defineSignal(CellModel.prototype, 'synchronizeRequest');
 
 
 /**
