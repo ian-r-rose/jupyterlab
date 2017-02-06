@@ -111,7 +111,10 @@ class NotebookModel extends DocumentModel implements INotebookModel, IRealtimeMo
       options.contentFactory || NotebookModel.defaultContentFactory
     );
     this.contentFactory = factory;
-    this._cells = new ObservableUndoableVector<ICellModel>((cell: nbformat.IBaseCell) => {
+    this._cells = new ObservableUndoableVector<ICellModel>((cell?: nbformat.IBaseCell) => {
+      if(!cell) {
+        return factory.createRawCell({});
+      }
       switch (cell.cell_type) {
         case 'code':
           return factory.createCodeCell({ cell });
