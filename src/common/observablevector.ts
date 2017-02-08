@@ -25,6 +25,10 @@ import {
   clearSignalData, defineSignal, ISignal
 } from 'phosphor/lib/core/signaling';
 
+import {
+  IObservableMap
+} from './observablemap';
+
 
 /**
  * A vector which can be observed for changes.
@@ -311,6 +315,14 @@ interface IObservableVector<T> extends IDisposable, ISequence<T> {
  */
 export
 class ObservableVector<T> extends Vector<T> implements IObservableVector<T> {
+  /**
+   * Constructor for ObservableVector
+   */
+  constructor(fromMapFactory?: (value: IObservableMap<any>)=>T) {
+    super();
+    this._fromMapFactory = fromMapFactory;
+  }
+
   /**
    * A signal emitted when the vector has changed.
    */
@@ -856,6 +868,7 @@ class ObservableVector<T> extends Vector<T> implements IObservableVector<T> {
 
   private _isDisposed = false;
   private _parent: IObservableVector<T> = null;
+  private _fromMapFactory: (value: IObservableMap<any>)=>T;
 }
 
 

@@ -91,6 +91,16 @@ interface IOutputAreaModel extends IDisposable {
    * Execute code on a kernel and send outputs to the model.
    */
   execute(code: string, kernel: Kernel.IKernel): Promise<KernelMessage.IExecuteReplyMsg>;
+
+  /**
+   * Serialize the outputs to JSON
+   */
+  toJSON(): nbformat.IOutput[];
+
+  /**
+   * Deserialize from JSON
+   */
+  fromJSON(outputs: nbformat.IOutput[]): void;
 }
 
 
@@ -316,6 +326,31 @@ class OutputAreaModel implements IOutputAreaModel {
       };
     });
   }
+
+  /**
+   * Serialize the outputs to JSON
+   */
+  toJSON(): nbformat.IOutput[] {
+    let outputs: nbformat.IOutput[] = [];
+    for(let i=0; i<this.length; i++) {
+      let output = this.get(i);
+      if(output.output_type !== 'input_request') {
+        outputs.push(output as nbformat.IOutput);
+      }
+    }
+    return outputs;
+  }
+
+  /**
+   * Deserialize from JSON
+   */
+  fromJSON(outputs: nbformat.IOutput[]) {
+    this.clear();
+    for (let output of outputs) {
+      this.add(output);
+    }
+  }
+
 
   protected clearNext = false;
   protected list: IObservableVector<OutputAreaModel.Output> = null;
