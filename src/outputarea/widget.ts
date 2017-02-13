@@ -324,7 +324,7 @@ class OutputAreaWidget extends Widget {
   protected updateChild(index: number): void {
     let layout = this.layout as PanelLayout;
     let widget = layout.widgets.at(index) as OutputWidget;
-    let output = this._model.get(index);
+    let output = this._model.at(index);
     let injector: (mimetype: string, value: string | JSONObject) => void;
     if (output.output_type === 'display_data' ||
         output.output_type === 'execute_result') {

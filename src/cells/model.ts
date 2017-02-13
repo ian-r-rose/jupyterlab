@@ -14,7 +14,7 @@ import {
 } from 'phosphor/lib/algorithm/iteration';
 
 import {
-  defineSignal, ISignal
+  defineSignal, ISignal, clearSignalData
 } from 'phosphor/lib/core/signaling';
 
 import {
@@ -28,6 +28,10 @@ import {
 import {
   IObservableString, ObservableString
 } from '../common/observablestring';
+
+import {
+  IObservableVector
+} from '../common/observablevector';
 
 import {
   IMetadataCursor, MetadataCursor
@@ -352,6 +356,14 @@ class CodeCellModel extends CellModel implements ICodeCellModel {
     }
     outputs.changed.connect(this._onOutputsChanged, this);
     this.set('outputs', outputs);
+
+    this._fromVecFactory = (vec: IObservableVector<any>)=>{
+      let outputs = factory.createOutputArea();
+      for(let i=0; i<outputs.length;i++) {
+        outputs.add(vec.at(i));
+      }
+      return outputs;
+    };
   }
 
   /**
@@ -391,6 +403,7 @@ class CodeCellModel extends CellModel implements ICodeCellModel {
     if (this.isDisposed) {
       return;
     }
+    clearSignalData(this);
     this.get('outputs').dispose();
     this.delete('outputs');
     super.dispose();
@@ -411,9 +424,11 @@ class CodeCellModel extends CellModel implements ICodeCellModel {
    */
   private _onOutputsChanged(): void {
     //Trigger a change in the outputs field
-    this.set('outputs', this.get('outputs'));
+    //this.set('outputs', this.get('outputs'));
     this.contentChanged.emit(void 0);
   }
+
+  private _fromVecFactory: (vec: IObservableVector<any>)=> IOutputAreaModel = null;
 }
 
 

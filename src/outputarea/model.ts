@@ -34,7 +34,7 @@ import {
  * A model that maintains a list of output data.
  */
 export
-interface IOutputAreaModel extends IDisposable {
+interface IOutputAreaModel extends IObservableVector<OutputAreaModel.Output> {
   /**
    * A signal emitted when the model changes.
    */
@@ -44,16 +44,6 @@ interface IOutputAreaModel extends IDisposable {
    * A signal emitted when the model is disposed.
    */
   readonly disposed: ISignal<IOutputAreaModel, void>;
-
-  /**
-   * The length of the items in the model.
-   */
-  readonly length: number;
-
-  /**
-   * Get an item at the specified index.
-   */
-  get(index: number): OutputAreaModel.Output;
 
   /**
    * Add an output, which may be combined with previous output.
@@ -108,15 +98,7 @@ interface IOutputAreaModel extends IDisposable {
  * An model that maintains a list of output data.
  */
 export
-class OutputAreaModel implements IOutputAreaModel {
-  /**
-   * Construct a new observable outputs instance.
-   */
-  constructor() {
-    this.list = new ObservableVector<OutputAreaModel.Output>();
-    this.list.changed.connect(this._onListChanged, this);
-  }
-
+class OutputAreaModel extends ObservableVector<OutputAreaModel.Output> implements IOutputAreaModel {
   /**
    * A signal emitted when the model changes.
    */
@@ -128,38 +110,12 @@ class OutputAreaModel implements IOutputAreaModel {
   readonly disposed: ISignal<this, void>;
 
   /**
-   * Get the length of the items in the model.
-   */
-  get length(): number {
-    return this.list ? this.list.length : 0;
-  }
-
-  /**
-   * Test whether the model is disposed.
-   */
-  get isDisposed(): boolean {
-    return this.list === null;
-  }
-
-  /**
    * Dispose of the resources used by the model.
    */
   dispose(): void {
-    if (this.isDisposed) {
-      return;
-    }
     clearSignalData(this);
-    let list = this.list;
-    this.list = null;
-    list.clear();
+    super.dispose();
     this.disposed.emit(void 0);
-  }
-
-  /**
-   * Get an item at the specified index.
-   */
-  get(index: number): OutputAreaModel.Output {
-    return this.list.at(index);
   }
 
   /**
@@ -176,7 +132,7 @@ class OutputAreaModel implements IOutputAreaModel {
       this.clearNext = false;
     }
     if (output.output_type === 'input_request') {
-      this.list.pushBack(output);
+      this.pushBack(output);
     }
 
     // Make a copy of the output bundle.
@@ -191,7 +147,7 @@ class OutputAreaModel implements IOutputAreaModel {
 
     // Consolidate outputs if they are stream outputs of the same kind.
     let index = this.length - 1;
-    let lastOutput = this.get(index);
+    let lastOutput = this.at(index);
     if (value.output_type === 'stream'
         && lastOutput && lastOutput.output_type === 'stream'
         && value.name === lastOutput.name) {
@@ -200,7 +156,7 @@ class OutputAreaModel implements IOutputAreaModel {
       // This also replaces the metadata of the last item.
       let text = value.text as string;
       value.text = lastOutput.text as string + text;
-      this.list.set(index, value);
+      this.set(index, value);
       return index;
     } else {
       switch (value.output_type) {
@@ -208,7 +164,7 @@ class OutputAreaModel implements IOutputAreaModel {
       case 'execute_result':
       case 'display_data':
       case 'error':
-        return this.list.pushBack(value);
+        return this.pushBack(value);
       default:
         break;
       }
@@ -226,7 +182,7 @@ class OutputAreaModel implements IOutputAreaModel {
       this.clearNext = true;
       return;
     }
-    this.list.clear();
+    super.clear();
   }
 
   /**
@@ -244,7 +200,7 @@ class OutputAreaModel implements IOutputAreaModel {
    * Types are validated before being added.
    */
   addMimeData(output: nbformat.IDisplayData | nbformat.IExecuteResult, mimetype: string, value: string | JSONObject): void {
-    let index = indexOf(this.list, output);
+    let index = indexOf(this, output);
     if (index === -1) {
       throw new Error(`Cannot add data to non-tracked bundle`);
     }
@@ -333,7 +289,7 @@ class OutputAreaModel implements IOutputAreaModel {
   toJSON(): nbformat.IOutput[] {
     let outputs: nbformat.IOutput[] = [];
     for(let i=0; i<this.length; i++) {
-      let output = this.get(i);
+      let output = this.at(i);
       if(output.output_type !== 'input_request') {
         outputs.push(output as nbformat.IOutput);
       }
@@ -353,14 +309,6 @@ class OutputAreaModel implements IOutputAreaModel {
 
 
   protected clearNext = false;
-  protected list: IObservableVector<OutputAreaModel.Output> = null;
-
-  /**
-   * Handle a change to the list.
-   */
-  private _onListChanged(sender: IObservableVector<OutputAreaModel.Output>, args: ObservableVector.IChangedArgs<OutputAreaModel.Output>) {
-    this.changed.emit(args);
-  }
 }
 
 
