@@ -47,7 +47,7 @@ const FILE_CONFLICT_CLASS = 'jp-mod-conflict';
 export
 function createFromDialog(model: FileBrowserModel, manager: DocumentManager, creatorName: string): Promise<Widget> {
   let handler = new CreateFromHandler(model, manager, creatorName);
-  return manager.services.ready.then(() => {
+  return manager.ready.then(() => {
     return handler.populate();
   }).then(() => {
     return handler.showDialog();
@@ -61,7 +61,7 @@ function createFromDialog(model: FileBrowserModel, manager: DocumentManager, cre
 export
 function openWithDialog(path: string, manager: DocumentManager, host?: HTMLElement): Promise<Widget> {
   let handler: OpenWithHandler;
-  return manager.services.ready.then(() => {
+  return manager.ready.then(() => {
     handler = new OpenWithHandler(path, manager);
     return showDialog({
       title: 'Open File',
@@ -83,7 +83,7 @@ function openWithDialog(path: string, manager: DocumentManager, host?: HTMLEleme
 export
 function createNewDialog(model: FileBrowserModel, manager: DocumentManager, host?: HTMLElement): Promise<Widget> {
   let handler: CreateNewHandler;
-  return manager.services.ready.then(() => {
+  return manager.ready.then(() => {
     handler = new CreateNewHandler(model, manager);
     return showDialog({
       title: 'Create New File',
@@ -211,7 +211,7 @@ class OpenWithHandler extends Widget {
     let preference = this._manager.registry.getKernelPreference(
       this._ext, widgetName
     );
-    let services = this._manager.services;
+    let services = this._manager.defaultDrive.services;
     ClientSession.populateKernelSelect(this.kernelDropdownNode, {
       specs: services.specs,
       sessions: services.sessions.running(),
@@ -330,7 +330,7 @@ class CreateFromHandler extends Widget {
       this.node.removeChild(this.kernelDropdownNode.previousSibling);
       this.node.removeChild(this.kernelDropdownNode);
     } else {
-      let services = this._manager.services;
+      let services = this._manager.defaultDrive.services;
       ClientSession.populateKernelSelect(this.kernelDropdownNode, {
         specs: services.specs,
         sessions: services.sessions.running(),
@@ -559,7 +559,7 @@ class CreateNewHandler extends Widget {
     let widgetName = this.widgetDropdown.value;
     let manager = this._manager;
     let preference = manager.registry.getKernelPreference(ext, widgetName);
-    let services = this._manager.services;
+    let services = this._manager.defaultDrive.services;
     ClientSession.populateKernelSelect(this.kernelDropdownNode, {
       specs: services.specs,
       sessions: services.sessions.running(),

@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  Kernel, ServiceManager
+  Kernel
 } from '@jupyterlab/services';
 
 import {
@@ -34,20 +34,20 @@ import {
 } from '@jupyterlab/apputils';
 
 import {
-  IRealtime
-} from '@jupyterlab/coreutils';
-
-import {
   DocumentRegistry, Context
 } from '@jupyterlab/docregistry';
 
 import {
-  SaveHandler
+  ISaveHandler
 } from './savehandler';
 
 import {
   DocumentWidgetManager
 } from './widgetmanager';
+
+import {
+  IDrive
+} from './drive';
 
 /* tslint:disable */
 /**
@@ -81,13 +81,13 @@ class DocumentManager implements IDisposable {
    */
   constructor(options: DocumentManager.IOptions) {
     this._registry = options.registry;
-    this._serviceManager = options.manager;
+    this._defaultDrive = options.defaultDrive;
     this._opener = options.opener;
-    this._realtimeServices = options.realtimeServices;
     this._widgetManager = new DocumentWidgetManager({
       registry: this._registry
     });
     this._widgetManager.activateRequested.connect(this._onActivateRequested, this);
+    this._ready = this._defaultDrive.services.ready;
   }
 
   /**
@@ -105,35 +105,77 @@ class DocumentManager implements IDisposable {
   }
 
   /**
-   * Get the service manager used by the manager.
-   */
-  get services(): ServiceManager.IManager {
-    return this._serviceManager;
-  }
-
-  /**
    * Get whether the document manager has been disposed.
    */
   get isDisposed(): boolean {
-    return this._serviceManager === null;
+    return this._defaultDrive === null;
+  }
+
+  /**
+   * Get the default drive model for the manager.
+   */
+  get defaultDrive(): IDrive {
+    return this._defaultDrive;
+  }
+
+  /**
+   * Get any additional drives for the manager.
+   */
+  get additionalDrives(): IDrive[] {
+    let drives: IDrive[] = [];
+    this._additionalDrives.forEach( drive => {
+      drives.push(drive);
+    });
+    return drives;
+  }
+
+  /**
+   * Whether the `DocumentManager` (and all of its drives)
+   * is ready to be used.
+   */
+  get ready(): Promise<void> {
+    return this._ready;
+  }
+
+  /**
+   * Add a drive model to the document manager.
+   */
+  addDrive(drive: IDrive): void {
+    if (this._additionalDrives.has(drive.name)) {
+      throw Error('A drive with the name '+drive.name+' already exists');
+    }
+    this._additionalDrives.set(drive.name, drive);
+    let promises: Promise<void>[] = [];
+    promises.push(this._defaultDrive.services.ready);
+    this._additionalDrives.forEach(drive => {
+      promises.push(drive.services.ready);
+    });
+    this._ready = Promise.all(promises).then(() => { return void 0; });
   }
 
   /**
    * Dispose of the resources held by the document manager.
    */
   dispose(): void {
-    if (this._serviceManager === null) {
+    if (this._defaultDrive === null) {
       return;
     }
     let widgetManager = this._widgetManager;
-    this._serviceManager = null;
+    this._defaultDrive = null;
     this._widgetManager = null;
     Signal.clearData(this);
-    each(toArray(this._contexts), context => {
+    each(this._defaultDriveContexts, context => {
       widgetManager.closeWidgets(context);
     });
+    this._additionalDriveContexts.forEach(contextList => {
+      each(contextList, context => {
+        widgetManager.closeWidgets(context);
+      });
+    });
+    this._additionalDriveContexts.clear();
+    this._additionalDrives.clear();
     widgetManager.dispose();
-    this._contexts.length = 0;
+    this._defaultDriveContexts.length = 0;
   }
 
   /**
@@ -272,7 +314,7 @@ class DocumentManager implements IDisposable {
    */
   closeAll(): Promise<void> {
     return Promise.all(
-      toArray(map(this._contexts, context => {
+      toArray(map(this._defaultDriveContexts, context => {
         return this._widgetManager.closeWidgets(context);
       }))
     ).then(() => undefined);
@@ -282,7 +324,8 @@ class DocumentManager implements IDisposable {
    * Find a context for a given path and factory name.
    */
   private _findContext(path: string, factoryName: string): Private.IContext {
-    return find(this._contexts, context => {
+    let driveContexts = this._driveContextsForPath(path);
+    return find(driveContexts, context => {
       return (context.factoryName === factoryName &&
               context.path === path);
     });
@@ -292,7 +335,8 @@ class DocumentManager implements IDisposable {
    * Get a context for a given path.
    */
   private _contextForPath(path: string): Private.IContext {
-    return find(this._contexts, context => {
+    let driveContexts = this._driveContextsForPath(path);
+    return find(driveContexts, context => {
       return context.path === path;
     });
   }
@@ -301,28 +345,29 @@ class DocumentManager implements IDisposable {
    * Create a context from a path and a model factory.
    */
   private _createContext(path: string, factory: DocumentRegistry.ModelFactory, kernelPreference: IClientSession.IKernelPreference): Private.IContext {
+    let drive = this._driveForPath(path);
+    let driveContexts = this._driveContextsForPath(path);
+    let localPath = this._localPath(path);
+
     let adopter = (widget: Widget) => {
       this._widgetManager.adoptWidget(context, widget);
       this._opener.open(widget);
     };
     let context = new Context({
       opener: adopter,
-      manager: this._serviceManager,
+      manager: drive.services,
       factory,
-      path,
+      path: localPath,
       kernelPreference,
-      realtimeServices: this._realtimeServices
+      realtimeServices: drive.realtimeServices
     });
-    let handler = new SaveHandler({
-      context,
-      manager: this._serviceManager
-    });
+    let handler = drive.createSaveHandler(context);
     Private.saveHandlerProperty.set(context, handler);
     context.ready.then(() => {
       handler.start();
     });
     context.disposed.connect(this._onContextDisposed, this);
-    this._contexts.push(context);
+    driveContexts.push(context);
     return context;
   }
 
@@ -330,7 +375,12 @@ class DocumentManager implements IDisposable {
    * Handle a context disposal.
    */
   private _onContextDisposed(context: Private.IContext): void {
-    ArrayExt.removeFirstOf(this._contexts, context);
+    if (ArrayExt.removeFirstOf(this._defaultDriveContexts, context) !== -1) {
+      return;
+    }
+    this._additionalDriveContexts.forEach( contextList => {
+      ArrayExt.removeFirstOf(contextList, context);
+    });
   }
 
   /**
@@ -403,13 +453,76 @@ class DocumentManager implements IDisposable {
     this._activateRequested.emit(args);
   }
 
-  private _serviceManager: ServiceManager.IManager = null;
+  /**
+   * Given a path, determine the name of the drive with which
+   * it is associated, or an empty string for the default drive.
+   */
+  private _driveName(path: string): string {
+    let components = path.split(':');
+    if (components.length > 2) {
+      throw Error('Malformed path');
+    } else if (components.length === 1) {
+      return '';
+    } else {
+      return components[0];
+    }
+  }
+
+  /**
+   * Given a path, strip out the drive information, if it has any.
+   */
+  private _localPath(path: string): string {
+    let components = path.split(':');
+    if (components.length > 2) {
+      throw Error('Malformed path');
+    } else if (components.length === 1) {
+      return path;
+    } else {
+      return components[1];
+    }
+  }
+
+  /**
+   * Given a path, determine the drive to dispatch operations to.
+   */
+  private _driveForPath(path: string): IDrive {
+    let driveName = this._driveName(path);
+    if (driveName === '') {
+      // The case of no leading drive specifier.
+      return this._defaultDrive;
+    }
+    let drive = this._additionalDrives.get(driveName);
+    if (!drive) {
+      throw Error('Cannot find requested drive.');
+    }
+    return drive;
+  }
+
+  /**
+   * Given a path, get the context list for the relevant drive.
+   */
+  private _driveContextsForPath(path: string): Private.IContext[] {
+    let driveName = this._driveName(path);
+    if (driveName === '') {
+      // The case of no leading drive specifier.
+      return this._defaultDriveContexts;
+    }
+    let driveContexts = this._additionalDriveContexts.get(driveName);
+    if (!driveContexts) {
+      throw Error('Cannot find requested drive.');
+    }
+    return driveContexts;
+  }
+
   private _widgetManager: DocumentWidgetManager = null;
   private _registry: DocumentRegistry = null;
-  private _contexts: Private.IContext[] = [];
+  private _defaultDriveContexts: Private.IContext[] = [];
+  private _additionalDriveContexts = new Map<string, Private.IContext[]>();
   private _opener: DocumentManager.IWidgetOpener = null;
   private _activateRequested = new Signal<this, string>(this);
-  private _realtimeServices: IRealtime;
+  private _additionalDrives = new Map<string, IDrive>();
+  private _defaultDrive: IDrive = null;
+  private _ready: Promise<void> = null;
 }
 
 
@@ -429,19 +542,14 @@ namespace DocumentManager {
     registry: DocumentRegistry;
 
     /**
-     * A service manager instance.
+     * A default drive backend.
      */
-    manager: ServiceManager.IManager;
+    defaultDrive: IDrive;
 
     /**
      * A widget opener for sibling widgets.
      */
     opener: IWidgetOpener;
-
-    /**
-     * A provider for realtime services.
-     */
-    realtimeServices?: IRealtime;
   }
 
   /**
@@ -465,7 +573,7 @@ namespace Private {
    * An attached property for a context save handler.
    */
   export
-  const saveHandlerProperty = new AttachedProperty<DocumentRegistry.Context, SaveHandler>({
+  const saveHandlerProperty = new AttachedProperty<DocumentRegistry.Context, ISaveHandler>({
     name: 'saveHandler',
     create: () => null
   });

@@ -23,13 +23,40 @@ import {
 
 
 /**
+ * Interface for a class that manages the auto saving of a document.
+ */
+export
+interface ISaveHandler extends IDisposable {
+  /**
+   * The save interval used by the timer (in seconds).
+   */
+  saveInterval: number;
+
+  /**
+   * Whether the handler is active.
+   */
+  isActive: boolean;
+
+  /**
+   * Start the autosaver.
+   */
+  start(): void;
+
+  /**
+   * Stop the autosaver.
+   */
+  stop(): void;
+}
+
+
+/**
  * A class that manages the auto saving of a document.
  *
  * #### Notes
  * Implements https://github.com/ipython/ipython/wiki/IPEP-15:-Autosaving-the-IPython-Notebook.
  */
 export
-class SaveHandler implements IDisposable {
+class SaveHandler implements ISaveHandler {
   /**
    * Construct a new save handler.
    */

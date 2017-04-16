@@ -10,7 +10,7 @@ import {
 } from '@jupyterlab/apputils';
 
 import {
-  DocumentManager, IDocumentManager
+  DocumentManager, IDocumentManager, Drive
 } from '@jupyterlab/docmanager';
 
 import {
@@ -66,7 +66,9 @@ const plugin: JupyterLabPlugin<IDocumentManager> = {
       }
     };
 
-    const docManager = new DocumentManager({ registry, manager, opener });
+    const defaultDrive = new Drive({ name: 'default', services: manager });
+
+    const docManager = new DocumentManager({ registry, defaultDrive, opener });
 
     // Register the file operations commands.
     addCommands(app, docManager, palette);
@@ -135,8 +137,7 @@ function addCommands(app: JupyterLab, docManager: IDocumentManager, palette: ICo
     execute: args => {
       let path = args['path'] as string;
       let factory = args['factory'] as string || void 0;
-      return docManager.services.contents.get(path)
-        .then(() => docManager.openOrReveal(path, factory));
+      docManager.openOrReveal(path, factory);
     }
   });
 

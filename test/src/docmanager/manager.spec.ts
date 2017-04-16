@@ -12,7 +12,7 @@ import {
 } from '@phosphor/widgets';
 
 import {
-  DocumentManager
+  DocumentManager, Drive
 } from '@jupyterlab/docmanager';
 
 import {
@@ -58,9 +58,10 @@ describe('@jupyterlab/docmanager', () => {
     let registry = new DocumentRegistry();
     registry.addModelFactory(modelFactory);
     registry.addWidgetFactory(widgetFactory);
+    let defaultDrive = new Drive({ name: 'default', services });
     manager = new DocumentManager({
       registry,
-      manager: services,
+      defaultDrive,
       opener: {
         open: (widget: Widget) => {
           openedWidget = widget;
@@ -101,14 +102,6 @@ describe('@jupyterlab/docmanager', () => {
         expect(manager.isDisposed).to.be(true);
         manager.dispose();
         expect(manager.isDisposed).to.be(true);
-      });
-
-    });
-
-    describe('#services', () => {
-
-      it('should get the service manager for the manager', () => {
-        expect(manager.services).to.be.a(ServiceManager);
       });
 
     });

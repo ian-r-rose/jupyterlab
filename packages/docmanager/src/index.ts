@@ -4,3 +4,4 @@
 export * from './manager';
 export * from './savehandler';
 export * from './widgetmanager';
+export * from './drive';
