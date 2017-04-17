@@ -38,6 +38,9 @@ import {
 } from './observablemap';
 
 
+declare let require: any;
+let Racer = require('racer');
+
 /**
  * String type annotations for Observable objects that can be
  * created and placed in the IModelDB interface.
@@ -380,6 +383,7 @@ class ModelDB implements IModelDB {
    * Constructor for the `ModelDB`.
    */
   constructor(options: ModelDB.ICreateOptions = {}) {
+    this._model = Racer.createModel();
     this._basePath = options.basePath || '';
     if (options.baseDB) {
       this._db = options.baseDB;
@@ -453,9 +457,8 @@ class ModelDB implements IModelDB {
    * @returns the string that was created.
    */
   createString(path: string): IObservableString {
-    let str = new ObservableString();
+    let str = new ObservableString(this._model, path);
     this._disposables.add(str);
-    this.set(path, str);
     return str;
   }
 
@@ -598,6 +601,7 @@ class ModelDB implements IModelDB {
   private _db: ModelDB | ObservableMap<IObservable> = null;
   private _toDispose = false;
   private _disposables = new DisposableSet();
+  private _model: any;
 }
 
 /**
