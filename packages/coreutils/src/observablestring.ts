@@ -74,8 +74,8 @@ class ObservableString implements IObservableString {
    */
   constructor(model: any, path: string) {
     this._model = model;
-    this._path = path;
-    this._model.set(path, '');
+    this._path = '_page.'+path;
+    this._model.set(this._path, '');
 
     this._model.on('change', this._path, (value: string, previous: string, passed: any) => {
       if (passed.$stringInsert) {

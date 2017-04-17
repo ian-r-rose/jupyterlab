@@ -459,6 +459,7 @@ class ModelDB implements IModelDB {
   createString(path: string): IObservableString {
     let str = new ObservableString(this._model, path);
     this._disposables.add(str);
+    this.set(path, str);
     return str;
   }
 
