@@ -22,11 +22,11 @@ import {
 } from './observablemap';
 
 import {
-  IObservableJSON, ObservableJSON
+  IObservableJSON
 } from './observablejson';
 
 import {
-  IObservableString, ObservableString
+  IObservableString
 } from './observablestring';
 
 import {
@@ -36,6 +36,14 @@ import {
 import {
   IObservableMap
 } from './observablemap';
+
+import {
+  RacerString
+} from './racerstring';
+
+import {
+  RacerMap
+} from './racermap';
 
 
 declare let require: any;
@@ -457,7 +465,7 @@ class ModelDB implements IModelDB {
    * @returns the string that was created.
    */
   createString(path: string): IObservableString {
-    let str = new ObservableString(this._model, path);
+    let str = new RacerString(this._model, path);
     this._disposables.add(str);
     this.set(path, str);
     return str;
@@ -494,7 +502,7 @@ class ModelDB implements IModelDB {
    * JSON Objects and primitives.
    */
   createMap(path: string): IObservableJSON {
-    let map = new ObservableJSON();
+    let map = new RacerMap(this._model, path);
     this._disposables.add(map);
     this.set(path, map);
     return map;
