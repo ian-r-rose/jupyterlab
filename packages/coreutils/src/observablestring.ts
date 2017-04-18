@@ -72,39 +72,8 @@ class ObservableString implements IObservableString {
   /**
    * Construct a new observable string.
    */
-  constructor(model: any, path: string) {
-    this._model = model;
-    this._path = '_page.'+path;
-    this._model.set(this._path, '');
-
-    this._model.on('change', this._path, (value: string, previous: string, passed: any) => {
-      if (passed.$stringInsert) {
-        let start: number = passed.$stringInsert.index;
-        let end: number = start + passed.$stringInsert.text.length;
-        this._changed.emit({
-          type: 'insert',
-          start,
-          end,
-          value: passed.$stringInsert.text
-        });
-      } else if (passed.$stringRemove) {
-        let start: number = passed.$stringRemove.index;
-        let end: number = start + passed.$stringRemove.howMany;
-        this._changed.emit({
-          type: 'remove',
-          start,
-          end,
-          value: previous.slice(start, end)
-        });
-      } else {
-        this._changed.emit({
-          type: 'set',
-          start: 0,
-          end: value.length,
-          value
-        });
-      }
-    });
+  constructor(initialText: string = '') {
+    this._text = initialText;
   }
 
   /**
@@ -125,17 +94,23 @@ class ObservableString implements IObservableString {
    * Set the value of the string.
    */
   set text( value: string ) {
-    if (value.length === this.text.length && value === this.text) {
+    if (value.length === this._text.length && value === this._text) {
       return;
     }
-    this._model.set(this._path, value);
+    this._text = value;
+    this._changed.emit({
+      type: 'set',
+      start: 0,
+      end: value.length,
+      value: value
+    });
   }
 
   /**
    * Get the value of the string.
    */
   get text(): string {
-    return this._model.get(this._path);;
+    return this._text;
   }
 
   /**
@@ -146,7 +121,15 @@ class ObservableString implements IObservableString {
    * @param text - The substring to insert.
    */
   insert(index: number, text: string): void {
-    this._model.stringInsert(this._path, index, text);
+    this._text = this._text.slice(0, index) +
+                 text +
+                 this._text.slice(index);
+    this._changed.emit({
+      type: 'insert',
+      start: index,
+      end: index + text.length,
+      value: text
+    });
   }
 
   /**
@@ -157,7 +140,15 @@ class ObservableString implements IObservableString {
    * @param end - The ending index.
    */
   remove(start: number, end: number): void {
-    this._model.stringRemove(this._path, start, end-start);
+    let oldValue: string = this._text.slice(start, end);
+    this._text = this._text.slice(0, start) +
+                 this._text.slice(end);
+    this._changed.emit({
+      type: 'remove',
+      start: start,
+      end: end,
+      value: oldValue
+    });
   }
 
   /**
@@ -186,10 +177,9 @@ class ObservableString implements IObservableString {
     this.clear();
   }
 
+  private _text = '';
   private _isDisposed : boolean = false;
   private _changed = new Signal<this, ObservableString.IChangedArgs>(this);
-  private _model: any;
-  private _path: string;
 }
 
 
