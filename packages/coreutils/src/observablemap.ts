@@ -108,13 +108,11 @@ class ObservableMap<T> implements IObservableMap<T> {
   /**
    * Construct a new observable map.
    */
-  constructor(options: ObservableMap.IOptions<T> = {}) {
+  constructor(options: ObservableMap.IOptions<T>) {
     this._itemCmp = options.itemCmp || Private.itemCmp;
-    if (options.values) {
-      for (let key in options.values) {
-        this._map.set(key, options.values[key]);
-      }
-    }
+    this._model = options.model;
+    this._path = '_page.'+options.path;
+    this._model.set(this._path, {});
   }
 
   /**
@@ -136,14 +134,14 @@ class ObservableMap<T> implements IObservableMap<T> {
    * Whether this map has been disposed.
    */
   get isDisposed(): boolean {
-    return this._map === null;
+    return this._isDisposed;
   }
 
   /**
    * The number of key-value pairs in the map.
    */
   get size(): number {
-    return this._map.size;
+    return Object.keys(this._model.get(this._path)).length;
   }
 
   /**
@@ -162,7 +160,7 @@ class ObservableMap<T> implements IObservableMap<T> {
    * This is a no-op if the value does not change.
    */
   set(key: string, value: T): T {
-    let oldVal = this._map.get(key);
+    let oldVal = this.get(key);
     if (value === undefined) {
       throw Error('Cannot set an undefined value, use remove');
     }
@@ -171,13 +169,8 @@ class ObservableMap<T> implements IObservableMap<T> {
     if (oldVal !== undefined && itemCmp(oldVal, value)) {
       return;
     }
-    this._map.set(key, value);
-    this._changed.emit({
-      type: oldVal ? 'change' : 'add',
-      key: key,
-      oldValue: oldVal,
-      newValue: value
-    });
+
+    this._model.set(this._path+'.'+key, value);
     return oldVal;
   }
 
@@ -189,7 +182,7 @@ class ObservableMap<T> implements IObservableMap<T> {
    * @returns the value for that key.
    */
   get(key: string): T {
-    return this._map.get(key);
+    return this._model.get(this._path+'.'+key);
   }
 
   /**
@@ -200,7 +193,7 @@ class ObservableMap<T> implements IObservableMap<T> {
    * @returns `true` if the map has the key, `false` otherwise.
    */
   has(key: string): boolean {
-    return this._map.has(key);
+    return this.get(key) === undefined;
   }
 
   /**
@@ -209,11 +202,7 @@ class ObservableMap<T> implements IObservableMap<T> {
    * @returns - a list of keys.
    */
   keys(): string[] {
-    let keyList: string[] = [];
-    this._map.forEach((v: T, k: string) => {
-      keyList.push(k);
-    });
-    return keyList;
+    return Object.keys(this._model.get(this._path));
   }
 
 
@@ -224,9 +213,9 @@ class ObservableMap<T> implements IObservableMap<T> {
    */
   values(): T[] {
     let valList: T[] = [];
-    this._map.forEach((v: T, k: string) => {
-      valList.push(v);
-    });
+    for (let key of this.keys()) {
+      valList.push(this.get(key));
+    }
     return valList;
   }
 
@@ -239,15 +228,7 @@ class ObservableMap<T> implements IObservableMap<T> {
    *   or undefined if that does not exist.
    */
   delete(key: string): T {
-    let oldVal = this._map.get(key);
-    this._map.delete(key);
-    this._changed.emit({
-      type: 'remove',
-      key: key,
-      oldValue: oldVal,
-      newValue: undefined
-    });
-    return oldVal;
+    return this._model.del(this._path);
   }
 
   /**
@@ -265,17 +246,15 @@ class ObservableMap<T> implements IObservableMap<T> {
    * Dispose of the resources held by the map.
    */
   dispose(): void {
-    if (this._map === null) {
-      return;
-    }
+    this._isDisposed = true;
     Signal.clearData(this);
-    this._map.clear();
-    this._map = null;
   }
 
-  private _map: Map<string, T> = new Map<string, T>();
   private _itemCmp: (first: T, second: T) => boolean;
   private _changed = new Signal<this, ObservableMap.IChangedArgs<T>>(this);
+  private _isDisposed = false;
+  private _model: any = null;
+  private _path: string;
 }
 
 
@@ -289,10 +268,9 @@ namespace ObservableMap {
    */
   export
   interface IOptions<T> {
-    /**
-     * An optional intial set of values.
-     */
-    values?: { [key: string]: T };
+    model: any;
+
+    path: string;
 
     /**
      * The item comparison function for change detection on `set`.

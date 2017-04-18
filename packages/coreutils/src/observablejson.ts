@@ -47,10 +47,11 @@ class ObservableJSON extends ObservableMap<JSONValue> {
   /**
    * Construct a new observable JSON object.
    */
-  constructor(options: ObservableJSON.IOptions = {}) {
+  constructor(options: ObservableJSON.IOptions) {
     super({
       itemCmp: JSONExt.deepEqual,
-      values: options.values
+      model: options.model,
+      path: options.path
     });
   }
 
@@ -82,10 +83,9 @@ namespace ObservableJSON {
    */
   export
   interface IOptions {
-    /**
-     * The optional intitial value for the object.
-     */
-    values?: JSONObject;
+    model: any;
+
+    path: string;
   }
 
   /**
