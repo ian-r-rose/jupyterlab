@@ -2,7 +2,7 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  ArrayExt, IIterator, ArrayIterator, IterableOrArrayLike, toArray
+  ArrayExt, IIterator, ArrayIterator, IterableOrArrayLike, toArray, each
 } from '@phosphor/algorithm';
 
 import {
@@ -17,12 +17,16 @@ import {
   IObservableVector, ObservableVector
 } from './observablevector';
 
+import {
+  IObservableUndoableVector
+} from './undoablevector';
+
 
 /**
  * A concrete implementation of [[IObservableVector]].
  */
 export
-class RacerVector implements IObservableVector<JSONValue> {
+class RacerVector implements IObservableUndoableVector<JSONValue> {
   /**
    * Construct a new observable map.
    */
@@ -32,9 +36,50 @@ class RacerVector implements IObservableVector<JSONValue> {
     this._model.set(this._path, []);
     this._length = 0;
 
-    this._model.on('change', this._path+'.*', (strIndex: string, value: JSONValue, previous: JSONValue, passed: any) => {
-      console.log(strIndex, value, previous, passed);
+    this._model.on('change', this._path+'.**', (pattern: string, value: JSONValue, previous: JSONValue) => {
+      let index = Number(pattern);
+      this._changed.emit({
+        type: 'set',
+        oldIndex: index,
+        newIndex: index,
+        oldValues: [previous],
+        newValues: [value]
+      });
     });
+    this._model.on('insert', this._path+'.**', (pattern: string, index: number, values: JSONValue[]) => {
+      this._length += values.length;
+      this._changed.emit({
+        type: 'add',
+        oldIndex: -1,
+        newIndex: index,
+        oldValues: [],
+        newValues: values
+      });
+    });
+    this._model.on('remove', this._path+'.**', (pattern: string, index: number, removed: JSONValue[]) => {
+      this._length -= removed.length;
+      this._changed.emit({
+        type: 'remove',
+        oldIndex: index,
+        newIndex: -1,
+        oldValues: removed,
+        newValues: []
+      });
+    });
+    this._model.on('move', this._path+'.**', (pattern: string, from: number, to: number, howMany: number) => {
+      if (howMany !== 1) {
+        throw Error('RacerVector: multimove not currently supported');
+      }
+      let value = this._model.get(this._path+'.'+String(to));
+      this._changed.emit({
+        type: 'move',
+        oldIndex: from,
+        newIndex: to,
+        oldValues: [value],
+        newValues: [value]
+      });
+    });
+    this.changed.connect(this._onVectorChanged, this);
   }
 
   /**
@@ -132,6 +177,19 @@ class RacerVector implements IObservableVector<JSONValue> {
     return this._length === 0 ? undefined : this.at(this._length);
   }
 
+  /**
+   * Whether the object can redo changes.
+   */
+  get canRedo(): boolean {
+    return this._index < this._stack.length - 1;
+  }
+
+  /**
+   * Whether the object can undo changes.
+   */
+  get canUndo(): boolean {
+    return this._index >= 0;
+  }
   /**
    * Create an iterator over the values in the vector.
    *
@@ -341,7 +399,7 @@ class RacerVector implements IObservableVector<JSONValue> {
     if (this.length <= 1 || fromIndex === toIndex) {
       return;
     }
-    this._model.move(this._path, fromIndex, toIndex);
+    this._model.move(this._path, fromIndex, toIndex, 1);
   }
 
   /**
@@ -409,9 +467,187 @@ class RacerVector implements IObservableVector<JSONValue> {
     return this._length;
   }
 
+  /**
+   * Begin a compound operation.
+   *
+   * @param isUndoAble - Whether the operation is undoable.
+   *   The default is `true`.
+   */
+  beginCompoundOperation(isUndoAble?: boolean): void {
+    this._inCompound = true;
+    this._isUndoable = (isUndoAble !== false);
+    this._madeCompoundChange = false;
+  }
+
+  /**
+   * End a compound operation.
+   */
+  endCompoundOperation(): void {
+    this._inCompound = false;
+    this._isUndoable = true;
+    if (this._madeCompoundChange) {
+      this._index++;
+    }
+  }
+
+  /**
+   * Undo an operation.
+   */
+  undo(): void {
+    if (!this.canUndo) {
+      return;
+    }
+    let changes = this._stack[this._index];
+    this._isUndoable = false;
+    for (let change of changes.reverse()) {
+      this._undoChange(change);
+    }
+    this._isUndoable = true;
+    this._index--;
+  }
+
+  /**
+   * Redo an operation.
+   */
+  redo(): void {
+    if (!this.canRedo) {
+      return;
+    }
+    this._index++;
+    let changes = this._stack[this._index];
+    this._isUndoable = false;
+    for (let change of changes) {
+      this._redoChange(change);
+    }
+    this._isUndoable = true;
+  }
+
+  /**
+   * Clear the change stack.
+   */
+  clearUndo(): void {
+    this._index = -1;
+    this._stack = [];
+  }
+
+  /**
+   * Handle a change in the vector.
+   */
+  private _onVectorChanged(list: IObservableVector<JSONValue>, change: ObservableVector.IChangedArgs<JSONValue>): void {
+    if (this.isDisposed || !this._isUndoable) {
+      return;
+    }
+    // Clear everything after this position if necessary.
+    if (!this._inCompound || !this._madeCompoundChange) {
+      this._stack = this._stack.slice(0, this._index + 1);
+    }
+    // Copy the change.
+    let evt = this._copyChange(change);
+    // Put the change in the stack.
+    if (this._stack[this._index + 1]) {
+      this._stack[this._index + 1].push(evt);
+    } else {
+      this._stack.push([evt]);
+    }
+    // If not in a compound operation, increase index.
+    if (!this._inCompound) {
+      this._index++;
+    } else {
+      this._madeCompoundChange = true;
+    }
+  }
+
+  /**
+   * Undo a change event.
+   */
+  private _undoChange(change: ObservableVector.IChangedArgs<JSONValue>): void {
+    let index = 0;
+    switch (change.type) {
+    case 'add':
+      each(change.newValues, () => {
+        this.removeAt(change.newIndex);
+      });
+      break;
+    case 'set':
+      index = change.oldIndex;
+      each(change.oldValues, value => {
+        this.set(index++, value);
+      });
+      break;
+    case 'remove':
+      index = change.oldIndex;
+      each(change.oldValues, value => {
+        this.insert(index++, value);
+      });
+      break;
+    case 'move':
+      this.move(change.newIndex, change.oldIndex);
+      break;
+    default:
+      return;
+    }
+  }
+
+  /**
+   * Redo a change event.
+   */
+  private _redoChange(change: ObservableVector.IChangedArgs<JSONValue>): void {
+    let index = 0;
+    switch (change.type) {
+    case 'add':
+      index = change.newIndex;
+      each(change.newValues, value => {
+        this.insert(index++, value);
+      });
+      break;
+    case 'set':
+      index = change.newIndex;
+      each(change.newValues, value => {
+        this.set(change.newIndex++, value);
+      });
+      break;
+    case 'remove':
+      each(change.oldValues, () => {
+        this.removeAt(change.oldIndex);
+      });
+      break;
+    case 'move':
+      this.move(change.oldIndex, change.newIndex);
+      break;
+    default:
+      return;
+    }
+  }
+
+  /**
+   * Copy a change as JSON.
+   */
+  private _copyChange(change: ObservableVector.IChangedArgs<JSONValue>): ObservableVector.IChangedArgs<JSONValue> {
+    let oldValues: JSONValue[] = [];
+    each(change.oldValues, value => {
+      oldValues.push(value);
+    });
+    let newValues: JSONValue[] = [];
+    each(change.newValues, value => {
+      newValues.push(value);
+    });
+    return {
+      type: change.type,
+      oldIndex: change.oldIndex,
+      newIndex: change.newIndex,
+      oldValues,
+      newValues
+    };
+  }
+
   private _isDisposed = false;
   private _changed = new Signal<this, ObservableVector.IChangedArgs<JSONValue>>(this);
   private _model: any;
   private _path: string;
   private _length: number;
+  private _inCompound = false;
+  private _isUndoable = true;
+  private _madeCompoundChange = false;
+  private _index = -1;
+  private _stack: ObservableVector.IChangedArgs<JSONValue>[][] = [];
 }

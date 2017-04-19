@@ -30,7 +30,7 @@ import {
 } from './observablestring';
 
 import {
-  IObservableUndoableVector, ObservableUndoableVector
+  IObservableUndoableVector
 } from './undoablevector';
 
 import {
@@ -44,6 +44,10 @@ import {
 import {
   RacerMap
 } from './racermap';
+
+import {
+  RacerVector
+} from './racervector';
 
 
 declare let require: any;
@@ -483,8 +487,7 @@ class ModelDB implements IModelDB {
    * JSON Objects and primitives.
    */
   createVector(path: string): IObservableUndoableVector<JSONValue> {
-    let vec = new ObservableUndoableVector<JSONValue>(
-      new ObservableUndoableVector.IdentitySerializer());
+    let vec = new RacerVector(this._model, path)
     this._disposables.add(vec);
     this.set(path, vec);
     return vec;
