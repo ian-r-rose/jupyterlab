@@ -30,6 +30,10 @@ class RacerMap implements IObservableJSON {
     this._model = model;
     this._path = '_page.'+path;
     this._model.set(this._path, {});
+
+    this._model.on('change', this._path+'.*', (value: string, previous: any, passed: any) => {
+      console.log(value, previous, passed);
+    });
   }
 
   /**
@@ -144,7 +148,7 @@ class RacerMap implements IObservableJSON {
    *   or undefined if that does not exist.
    */
   delete(key: string): JSONValue {
-    return this._model.del(this._path);
+    return this._model.del(this._path+'.'+key);
   }
 
   /**
