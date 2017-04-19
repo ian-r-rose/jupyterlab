@@ -31,8 +31,21 @@ class RacerMap implements IObservableJSON {
     this._path = '_page.'+path;
     this._model.set(this._path, {});
 
-    this._model.on('change', this._path+'.*', (value: string, previous: any, passed: any) => {
-      console.log(value, previous, passed);
+    this._model.on('change', this._path+'.*', (key: string, value: JSONValue, previous: JSONValue) => {
+      let changeType: ObservableMap.ChangeType;
+      if (value && previous) {
+        changeType = 'change';
+      } else if (value && !previous) {
+        changeType = 'add';
+      } else if (!value) {
+        changeType = 'remove'
+      }
+      this._changed.emit({
+        type: changeType,
+        key,
+        oldValue: previous,
+        newValue: value
+      });
     });
   }
 
