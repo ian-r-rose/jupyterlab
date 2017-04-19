@@ -126,7 +126,7 @@ class RacerMap implements IObservableJSON {
    * @returns `true` if the map has the key, `false` otherwise.
    */
   has(key: string): boolean {
-    return this.get(key) === undefined;
+    return this.get(key) !== undefined;
   }
 
   /**
