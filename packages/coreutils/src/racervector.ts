@@ -2,11 +2,11 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  ArrayExt, IterableOrArrayLike, toArray
+  ArrayExt, IIterator, ArrayIterator, IterableOrArrayLike, toArray
 } from '@phosphor/algorithm';
 
 import {
-  JSONValue
+  JSONValue, JSONExt
 } from '@phosphor/coreutils';
 
 import {
@@ -30,6 +30,11 @@ class RacerVector implements IObservableVector<JSONValue> {
     this._model = model;
     this._path = '_page.'+path;
     this._model.set(this._path, []);
+    this._length = 0;
+
+    this._model.on('change', this._path+'.*', (strIndex: string, value: JSONValue, previous: JSONValue, passed: any) => {
+      console.log(strIndex, value, previous, passed);
+    });
   }
 
   /**
@@ -68,7 +73,7 @@ class RacerVector implements IObservableVector<JSONValue> {
    * No changes.
    */
   get isEmpty(): boolean {
-    return this._model.get(this._path).length === 0;
+    return this._length === 0;
   }
 
   /**
@@ -86,7 +91,80 @@ class RacerVector implements IObservableVector<JSONValue> {
    * No changes.
    */
   get length(): number {
-    return this._model.get(this._path).length;
+    return this._length;
+  }
+
+  /**
+   * Get the value at the front of the vector.
+   *
+   * @returns The value at the front of the vector, or `undefined` if
+   *   the vector is empty.
+   *
+   * #### Notes
+   * This is a read-only property.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * No changes.
+   */
+  get front(): JSONValue {
+    return this._length === 0 ? undefined : this.at(0);
+  }
+
+  /**
+   * Get the value at the back of the vector.
+   *
+   * @returns The value at the back of the vector, or `undefined` if
+   *   the vector is empty.
+   *
+   * #### Notes
+   * This is a read-only property.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * No changes.
+   */
+  get back(): JSONValue {
+    return this._length === 0 ? undefined : this.at(this._length);
+  }
+
+  /**
+   * Create an iterator over the values in the vector.
+   *
+   * @returns A new iterator starting at the front of the vector.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * No changes.
+   */
+  iter(): IIterator<JSONValue> {
+    return new ArrayIterator<JSONValue>(this._model.get(this._path));
+  }
+
+  /**
+   * Get the value at the specified index.
+   *
+   * @param index - The positive integer index of interest.
+   *
+   * @returns The value at the specified index.
+   *
+   * #### Complexity
+   * Constant.
+   *
+   * #### Iterator Validity
+   * No changes.
+   *
+   * #### Undefined Behavior
+   * An `index` which is non-integral or out of range.
+   */
+  at(index: number): JSONValue {
+    return this._model.get(this._path+'.'+String(index));
   }
 
   /**
@@ -118,15 +196,15 @@ class RacerVector implements IObservableVector<JSONValue> {
    * An `index` which is non-integral or out of range.
    */
   set(index: number, value: JSONValue): void {
-    let oldValues = [this.at(index)];
+    let oldValue = this.at(index);
     if (value === undefined) {
       value = null;
     }
     // Bail if the value does not change.
-    let itemCmp = this._itemCmp;
-    if (itemCmp(oldValues[0], value)) {
+    if (JSONExt.deepEqual(oldValue, value)) {
       return;
     }
+    this._model.set(this._path+'.'+String(index), value);
   }
 
   /**
@@ -143,7 +221,7 @@ class RacerVector implements IObservableVector<JSONValue> {
    * No changes.
    */
   pushBack(value: JSONValue): number {
-    return num;
+    return this._model.push(this._path, value);
   }
 
   /**
@@ -159,7 +237,7 @@ class RacerVector implements IObservableVector<JSONValue> {
    * Iterators pointing at the removed value are invalidated.
    */
   popBack(): JSONValue {
-    return value;
+    return this._model.pop(this._path);
   }
 
   /**
@@ -184,7 +262,7 @@ class RacerVector implements IObservableVector<JSONValue> {
    * An `index` which is non-integral.
    */
   insert(index: number, value: JSONValue): number {
-    return num;
+    return this._model.insert(this._path, index, [value]);
   }
 
   /**
@@ -202,8 +280,7 @@ class RacerVector implements IObservableVector<JSONValue> {
    * Iterators pointing at the removed value and beyond are invalidated.
    */
   remove(value: JSONValue): number {
-    let itemCmp = this._itemCmp;
-    let index = ArrayExt.findFirstIndex(toArray(this), item => itemCmp(item, value));
+    let index = ArrayExt.findFirstIndex(this._model.get(this._path), JSONExt.deepEqual);
     this.removeAt(index);
     return index;
   }
@@ -226,7 +303,8 @@ class RacerVector implements IObservableVector<JSONValue> {
    * An `index` which is non-integral.
    */
   removeAt(index: number): JSONValue {
-    return value;
+    let removed = this._model.remove(this._path, index);
+    return removed[0];
   }
 
   /**
@@ -239,6 +317,7 @@ class RacerVector implements IObservableVector<JSONValue> {
    * All current iterators are invalidated.
    */
   clear(): void {
+    this._model.remove(this._path, 0, this._length);
   }
 
   /**
@@ -262,6 +341,7 @@ class RacerVector implements IObservableVector<JSONValue> {
     if (this.length <= 1 || fromIndex === toIndex) {
       return;
     }
+    this._model.move(this._path, fromIndex, toIndex);
   }
 
   /**
@@ -278,7 +358,7 @@ class RacerVector implements IObservableVector<JSONValue> {
    * No changes.
    */
   pushAll(values: IterableOrArrayLike<JSONValue>): number {
-    return this.length;
+    return this._model.insert(this._path, this._length, toArray(values));
   }
 
   /**
@@ -325,11 +405,13 @@ class RacerVector implements IObservableVector<JSONValue> {
    * A `startIndex` or `endIndex` which is non-integral.
    */
   removeRange(startIndex: number, endIndex: number): number {
-    return this.length;
+    this._model.remove(this._path, startIndex, endIndex-startIndex);
+    return this._length;
   }
 
   private _isDisposed = false;
   private _changed = new Signal<this, ObservableVector.IChangedArgs<JSONValue>>(this);
   private _model: any;
   private _path: string;
+  private _length: number;
 }
