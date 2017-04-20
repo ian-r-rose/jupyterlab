@@ -1,0 +1,3 @@
+[submodule "packages/jupyterlab-google-drive"]
+	path = packages/jupyterlab-google-drive
+	url = https://github.com/ian-r-rose/jupyterlab-google-drive

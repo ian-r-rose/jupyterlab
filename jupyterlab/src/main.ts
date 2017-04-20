@@ -85,6 +85,9 @@ import * as terminalExtension
 import * as tooltipExtension
   from '@jupyterlab/tooltip-extension';
 
+import * as googleDriveExtension
+  from '@jupyterlab/google-drive';
+
 import 'font-awesome/css/font-awesome.min.css';
 import '@jupyterlab/default-theme/style/index.css';
 
@@ -116,6 +119,7 @@ const mods: JupyterLab.IPluginModule[] = [
   tabmanagerExtension,
   terminalExtension,
   tooltipExtension,
+  googleDriveExtension,
 ];
 
 
