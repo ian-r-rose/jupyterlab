@@ -26,6 +26,7 @@ import "@jupyterlab/fileeditor-extension";
 import "@jupyterlab/faq-extension";
 import "@jupyterlab/filebrowser";
 import "@jupyterlab/filebrowser-extension";
+import "@jupyterlab/google-drive";
 import "@jupyterlab/help-extension";
 import "@jupyterlab/imageviewer";
 import "@jupyterlab/imageviewer-extension";
