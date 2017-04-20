@@ -187,7 +187,7 @@ class RacerMap implements IObservableJSON {
     this._listener = null;
 
     Signal.clearData(this);
-    this._model.removeListener(listener);
+    this._model.removeListener('change', listener);
 
     this.clear();
     this._model = null;

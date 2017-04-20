@@ -37,7 +37,7 @@ class RacerVector implements IObservableUndoableVector<JSONValue> {
     this._length = 0;
 
     // Hook up listeners for changes to the model.
-    this._listeners.push(this._model.on('change', this._path+'.**',
+    this._changeListener = this._model.on('change', this._path+'.**',
     (pattern: string, value: JSONValue, previous: JSONValue) => {
       let index = Number(pattern);
       this._changed.emit({
@@ -47,8 +47,8 @@ class RacerVector implements IObservableUndoableVector<JSONValue> {
         oldValues: [previous],
         newValues: [value]
       });
-    }));
-    this._listeners.push(this._model.on('insert', this._path+'.**',
+    });
+    this._insertListener = this._model.on('insert', this._path+'.**',
     (pattern: string, index: number, values: JSONValue[]) => {
       this._length += values.length;
       this._changed.emit({
@@ -58,8 +58,8 @@ class RacerVector implements IObservableUndoableVector<JSONValue> {
         oldValues: [],
         newValues: values
       });
-    }));
-    this._listeners.push(this._model.on('remove', this._path+'.**',
+    });
+    this._removeListener = this._model.on('remove', this._path+'.**',
     (pattern: string, index: number, removed: JSONValue[]) => {
       this._length -= removed.length;
       this._changed.emit({
@@ -69,8 +69,8 @@ class RacerVector implements IObservableUndoableVector<JSONValue> {
         oldValues: removed,
         newValues: []
       });
-    }));
-    this._listeners.push(this._model.on('move', this._path+'.**',
+    });
+    this._moveListener = this._model.on('move', this._path+'.**',
     (pattern: string, from: number, to: number, howMany: number) => {
       if (howMany !== 1) {
         throw Error('RacerVector: multimove not currently supported');
@@ -83,7 +83,7 @@ class RacerVector implements IObservableUndoableVector<JSONValue> {
         oldValues: [value],
         newValues: [value]
       });
-    }));
+    });
 
     // Hook up onVectorChanged signal to handle the undo stack.
     this.changed.connect(this._onVectorChanged, this);
@@ -107,7 +107,7 @@ class RacerVector implements IObservableUndoableVector<JSONValue> {
    * Test whether the vector has been disposed.
    */
   get isDisposed(): boolean {
-    return this._listeners === null;
+    return this._changeListener === null;
   }
 
   /**
@@ -236,16 +236,17 @@ class RacerVector implements IObservableUndoableVector<JSONValue> {
    * Dispose of the resources held by the vector.
    */
   dispose(): void {
-    if (this._listeners === null) {
+    if (this._changeListener === null) {
       return;
     }
-    let listeners = this._listeners;
-    this._listeners = null;
+    let changeListener = this._changeListener;
+    this._changeListener = null;
 
     Signal.clearData(this);
-    for (let listener of listeners) {
-      this._model.removeListener(listener);
-    }
+    this._model.removeListener('change', changeListener);
+    this._model.removeListener('insert', this._insertListener);
+    this._model.removeListener('remove', this._removeListener);
+    this._model.removeListener('move', this._moveListener);
 
     this.clear();
     this._model = null;
@@ -664,5 +665,8 @@ class RacerVector implements IObservableUndoableVector<JSONValue> {
   private _madeCompoundChange = false;
   private _index = -1;
   private _stack: ObservableVector.IChangedArgs<JSONValue>[][] = [];
-  private _listeners: any[] = [];
+  private _changeListener: any = null;
+  private _insertListener: any = null;
+  private _removeListener: any = null;
+  private _moveListener: any = null;
 }
