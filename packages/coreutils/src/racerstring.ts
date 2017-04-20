@@ -23,7 +23,8 @@ class RacerString implements IObservableString {
     this._path = '_page.'+path;
     this._model.set(this._path, '');
 
-    this._model.on('change', this._path, (value: string, previous: string, passed: any) => {
+    this._listener = this._model.on('change', this._path,
+    (value: string, previous: string, passed: any) => {
       if (passed.$stringInsert) {
         let start: number = passed.$stringInsert.index;
         let end: number = start + passed.$stringInsert.text.length;
@@ -117,23 +118,28 @@ class RacerString implements IObservableString {
    * Test whether the string has been disposed.
    */
   get isDisposed(): boolean {
-    return this._isDisposed;
+    return this._listener === null;
   }
 
   /**
    * Dispose of the resources held by the string.
    */
   dispose(): void {
-    if (this._isDisposed) {
+    if (this._listener === null) {
       return;
     }
-    this._isDisposed = true;
+    let listener = this._listener;
+    this._listener = null;
+
     Signal.clearData(this);
+    this._model.removeListener(listener);
+
     this.clear();
+    this._model = null;
   }
 
-  private _isDisposed : boolean = false;
   private _changed = new Signal<this, ObservableString.IChangedArgs>(this);
   private _model: any;
   private _path: string;
+  private _listener: any = null;
 }

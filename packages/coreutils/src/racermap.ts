@@ -31,7 +31,8 @@ class RacerMap implements IObservableJSON {
     this._path = '_page.'+path;
     this._model.set(this._path, {});
 
-    this._model.on('change', this._path+'.*', (key: string, value: JSONValue, previous: JSONValue) => {
+    this._listener = this._model.on('change', this._path+'.*',
+    (key: string, value: JSONValue, previous: JSONValue) => {
       let changeType: ObservableMap.ChangeType;
       if (value && previous) {
         changeType = 'change';
@@ -68,7 +69,7 @@ class RacerMap implements IObservableJSON {
    * Whether this map has been disposed.
    */
   get isDisposed(): boolean {
-    return this._isDisposed;
+    return this._listener === null;
   }
 
   /**
@@ -179,8 +180,17 @@ class RacerMap implements IObservableJSON {
    * Dispose of the resources held by the map.
    */
   dispose(): void {
-    this._isDisposed = true;
+    if (this._listener === null) {
+      return;
+    }
+    let listener = this._listener;
+    this._listener = null;
+
     Signal.clearData(this);
+    this._model.removeListener(listener);
+
+    this.clear();
+    this._model = null;
   }
 
   /**
@@ -200,7 +210,7 @@ class RacerMap implements IObservableJSON {
   }
 
   private _changed = new Signal<this, ObservableMap.IChangedArgs<JSONValue>>(this);
-  private _isDisposed = false;
   private _model: any = null;
   private _path: string;
+  private _listener: any = null;
 }
