@@ -31,6 +31,7 @@ jupyterlab-example-terminal          v0.5.1  (private)
 @jupyterlab/filebrowser              v0.5.1           
 @jupyterlab/fileeditor-extension     v0.5.0           
 @jupyterlab/fileeditor               v0.5.0           
+@jupyterlab/google-drive             v0.1.0              
 @jupyterlab/help-extension           v0.5.0           
 @jupyterlab/imageviewer-extension    v0.5.0           
 @jupyterlab/imageviewer              v0.5.0           
