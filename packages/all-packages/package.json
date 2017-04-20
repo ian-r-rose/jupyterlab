@@ -39,6 +39,7 @@
     "@jupyterlab/faq-extension": "^0.4.0",
     "@jupyterlab/filebrowser": "^0.4.0",
     "@jupyterlab/filebrowser-extension": "^0.4.0",
+    "@jupyterlab/google-drive": "^0.1.0",
     "@jupyterlab/help-extension": "^0.4.0",
     "@jupyterlab/imageviewer": "^0.4.0",
     "@jupyterlab/imageviewer-extension": "^0.4.0",
