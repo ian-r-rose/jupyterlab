@@ -16,6 +16,9 @@ import * as applicationExtension
 import * as apputilsExtension
   from '@jupyterlab/apputils-extension';
 
+import * as chatboxExtension
+  from '@jupyterlab/chatbox-extension';
+
 import * as codemirrorExtension
   from '@jupyterlab/codemirror-extension';
 
@@ -93,6 +96,7 @@ const mods: JupyterLab.IPluginModule[] = [
   aboutExtension,
   applicationExtension,
   apputilsExtension,
+  chatboxExtension,
   codemirrorExtension,
   completerExtension,
   consoleExtension,
