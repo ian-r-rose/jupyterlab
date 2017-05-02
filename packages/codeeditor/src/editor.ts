@@ -105,6 +105,16 @@ namespace CodeEditor {
      * A display name added to a selection.
      */
     displayName?: string;
+
+    /**
+     * A CSS string to apply to the selection.
+     */
+    css?: string;
+
+    /**
+     * A color for cursors.
+     */
+    color?: string;
   }
 
   /**
@@ -167,6 +177,11 @@ namespace CodeEditor {
      * The currently selected code.
      */
     readonly selections: IObservableMap<ITextSelection[]>;
+
+    /**
+     * The underlying `IModelDB instance.
+     */
+    readonly modelDB: IModelDB;
   }
 
   /**
@@ -195,6 +210,11 @@ namespace CodeEditor {
 
       this.modelDB.createMap('selections');
     }
+
+    /**
+     * The underlying `IModelDB instance.
+     */
+    readonly modelDB: IModelDB;
 
     /**
      * A signal emitted when a mimetype changes.
@@ -257,7 +277,6 @@ namespace CodeEditor {
       });
     }
 
-    protected modelDB: IModelDB = null;
     private _isDisposed = false;
     private _mimeTypeChanged = new Signal<this, IChangedArgs<string>>(this);
   }

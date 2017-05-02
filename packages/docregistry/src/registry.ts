@@ -581,6 +581,11 @@ namespace DocumentRegistry {
     readonly defaultKernelLanguage: string;
 
     /**
+     * The `IModelDB` in which model data is stored.
+     */
+    readonly modelDB: IModelDB;
+
+    /**
      * Serialize the model to a string.
      */
     toString(): string;
