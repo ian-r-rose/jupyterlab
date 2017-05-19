@@ -15,7 +15,7 @@ import {
 } from '@jupyterlab/cells';
 
 import {
-  IObservableJSON, IObservableUndoableVector, uuid,
+  IObservableJSON, IObservableUndoableVector, uuid, IObservableMap,
   IObservableVector, ObservableVector, nbformat, IModelDB
 } from '@jupyterlab/coreutils';
 
@@ -33,6 +33,11 @@ interface INotebookModel extends DocumentRegistry.IModel {
    * The list of cells in the notebook.
    */
   readonly cells: IObservableUndoableVector<ICellModel>;
+
+  /**
+   * The selected cells of the notebook.
+   */
+  readonly cellSelections: IObservableMap<number>;
 
   /**
    * The cell model factory for the notebook.
@@ -79,6 +84,8 @@ class NotebookModel extends DocumentModel implements INotebookModel {
     }
     this._cells.changed.connect(this._onCellsChanged, this);
 
+    this.modelDB.createMap('cellSelections');
+
     // Handle initial metadata.
     let metadata = this.modelDB.createMap('metadata');
     if (!metadata.has('language_info')) {
@@ -106,6 +113,13 @@ class NotebookModel extends DocumentModel implements INotebookModel {
    */
   get cells(): IObservableUndoableVector<ICellModel> {
     return this._cells;
+  }
+
+  /**
+   * Get the cell selections map.
+   */
+  get cellSelections(): IObservableMap<number> {
+    return this.modelDB.get('cellSelections') as IObservableMap<number>;
   }
 
   /**

@@ -49,7 +49,7 @@ import {
 
 import {
   IChangedArgs, IObservableMap, ObservableMap, IObservableVector,
-  ObservableVector, nbformat
+  ObservableVector, nbformat, uuid
 } from '@jupyterlab/coreutils';
 
 import {
@@ -162,6 +162,7 @@ class StaticNotebook extends Widget {
       options.contentFactory || StaticNotebook.defaultContentFactory
     );
     this._mimetypeService = options.mimeTypeService;
+    this._uuid = uuid();
   }
 
   /**
@@ -190,6 +191,18 @@ class StaticNotebook extends Widget {
    * The Rendermime instance used by the widget.
    */
   readonly rendermime: RenderMime;
+
+  /**
+   * A uuid used to identify the notebook viewing session.
+   */
+  get uuid(): string {
+    return this._uuid;
+  }
+  set uuid(newValue: string) {
+    if (newValue !== this._uuid) {
+      this._uuid = newValue;
+    }
+  }
 
   /**
    * The model for the widget.
@@ -459,6 +472,7 @@ class StaticNotebook extends Widget {
   private _mimetypeService: IEditorMimeTypeService;
   private _modelChanged = new Signal<this, void>(this);
   private _modelContentChanged = new Signal<this, void>(this);
+  private _uuid = '';
 }
 
 
@@ -696,6 +710,7 @@ class Notebook extends StaticNotebook {
     if (newValue === oldValue) {
       return;
     }
+    this.model.cellSelections.set(this.uuid, newValue);
     this._stateChanged.emit({ name: 'activeCellIndex', oldValue, newValue });
   }
 
