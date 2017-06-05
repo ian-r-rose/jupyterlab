@@ -10,6 +10,10 @@ import {
 } from '@phosphor/coreutils';
 
 import {
+  CollaboratorBadge
+} from '@jupyterlab/apputils';
+
+import {
   ICollaborator
 } from '@jupyterlab/coreutils';
 
@@ -22,11 +26,6 @@ import {
  */
 export
 const CHAT_ENTRY_CLASS = 'jp-ChatEntry';
-
-/**
- * The class name added to chatbox badges.
- */
-const CHAT_BADGE_CLASS = 'jp-ChatEntry-badge';
 
 
 /**
@@ -49,17 +48,10 @@ class ChatEntry extends Widget {
     let g = parseInt(color.slice(3,5), 16);
     let b = parseInt(color.slice(5,7), 16);
 
-    this._badge = new Widget();
-    this._badge.addClass(CHAT_BADGE_CLASS);
-    let badgeName = this.model.author.shortName ||
-                    this.model.author.displayName.split(' ')
-                    .filter(s => s).map(s => s[0]).join('');
-    this._badge.node.textContent = badgeName;
-
+    this._badge = new CollaboratorBadge(this.model.author);
     this.cell = options.cell;
 
     if (!options.isMe) {
-      this._badge.node.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.1)`;
       this.cell.node.style.backgroundColor = `rgba(${r}, ${g}, ${b}, 0.1)`;
     }
 

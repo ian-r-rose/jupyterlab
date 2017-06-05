@@ -13,6 +13,7 @@
     "lib": "lib/"
   },
   "dependencies": {
+    "@jupyterlab/apputils": "^0.6.0",
     "@jupyterlab/cells": "^0.6.0",
     "@jupyterlab/codeeditor": "^0.6.0",
     "@jupyterlab/coreutils": "^0.6.0",

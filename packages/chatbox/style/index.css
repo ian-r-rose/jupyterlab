@@ -72,13 +72,6 @@
   padding: 2px;
 }
 
-.jp-Chatbox .jp-ChatEntry-badge {
-  background-color: var(--jp-layout-color1);
-  border-radius: 10px;
-  padding: 2px;
-  min-width: 22px;
-}
-
 .jp-Chatbox-content .jp-InputArea {
   background: transparent;
   border-color: transparent;

@@ -158,7 +158,8 @@ class ChatboxDocumentInfo extends Widget {
     }
     this._context = value;
     this._context.pathChanged.connect(this._onPathChanged, this);
-    this.node.children[1].textContent = PathExt.basename(value.path);
+    this.node.children[1].textContent =
+      PathExt.basename(value.path.split(':').pop());
   }
 
   /**

@@ -3,6 +3,7 @@
 
 import '../style/index.css';
 
+export * from './badge';
 export * from './clientsession';
 export * from './clipboard';
 export * from './commandlinker';

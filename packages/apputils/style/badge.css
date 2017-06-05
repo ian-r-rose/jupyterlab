@@ -1,0 +1,14 @@
+/*-----------------------------------------------------------------------------
+| Copyright (c) Jupyter Development Team.
+| Distributed under the terms of the Modified BSD License.
+|----------------------------------------------------------------------------*/
+
+
+.jp-Collaborator-badge {
+  color: white;
+  background-color: var(--jp-brand-color0);
+  border-radius: 10px;
+  padding: 2px;
+  min-width: 22px;
+}
+
