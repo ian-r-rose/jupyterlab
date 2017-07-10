@@ -2,37 +2,18 @@
 // Distributed under the terms of the Modified BSD License.
 
 import {
-  Token
-} from '@phosphor/coreutils';
-
-import {
   ILayoutRestorer, JupyterLab, JupyterLabPlugin
 } from '@jupyterlab/application';
 
 import {
-  IInstanceTracker, InstanceTracker
+  InstanceTracker
 } from '@jupyterlab/apputils';
 
 import {
-  PDFViewer, PDFViewerFactory
-} from './widget';
+  MimeDocumentFactory, MimeDocument
+} from '@jupyterlab/docregistry';
 
 import '../style/index.css';
-
-/**
- * A class that tracks PDF widgets.
- */
-export
-interface IPDFTracker extends IInstanceTracker<PDFViewer> {}
-
-
-/* tslint:disable */
-/**
- * The PDF tracker token.
- */
-export
-const IPDFTracker = new Token<IPDFTracker>('jupyter.extensios.pdf-tracker');
-/* tslint:enable */
 
 /**
  * The list of file extensions for PDFs.
@@ -47,10 +28,9 @@ const FACTORY = 'PDF';
 /**
  * The PDF file handler extension.
  */
-const plugin: JupyterLabPlugin<IPDFTracker> = {
+const plugin: JupyterLabPlugin<void> = {
   activate,
   id: 'jupyter.extensions.pdf-handler',
-  provides: IPDFTracker,
   requires: [ILayoutRestorer],
   autoStart: true
 };
@@ -65,16 +45,18 @@ export default plugin;
 /**
  * Activate the PDF widget extension.
  */
-function activate(app: JupyterLab, restorer: ILayoutRestorer): IPDFTracker {
+function activate(app: JupyterLab, restorer: ILayoutRestorer) {
   const namespace = 'PDF-widget';
-  const factory = new PDFViewerFactory({
+  const factory = new MimeDocumentFactory({
     name: FACTORY,
     modelName: 'base64',
     fileExtensions: EXTENSIONS,
     defaultFor: EXTENSIONS,
-    readOnly: true
+    mimeType: 'application/pdf',
+    readOnly: true,
+    rendermime: app.rendermime
   });
-  const tracker = new InstanceTracker<PDFViewer>({ namespace });
+  const tracker = new InstanceTracker<MimeDocument>({ namespace });
 
   // Handle state restoration.
   restorer.restore(tracker, {
@@ -90,6 +72,4 @@ function activate(app: JupyterLab, restorer: ILayoutRestorer): IPDFTracker {
     widget.context.pathChanged.connect(() => { tracker.save(widget); });
     tracker.add(widget);
   });
-
-  return tracker;
 }
