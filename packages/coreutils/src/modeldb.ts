@@ -10,7 +10,7 @@ import {
 } from '@phosphor/signaling';
 
 import {
-  JSONValue, JSONObject
+  JSONValue, JSONObject, PromiseDelegate
 } from '@phosphor/coreutils';
 
 import {
@@ -22,7 +22,7 @@ import {
 } from './observablejson';
 
 import {
-  IObservableString, ObservableString
+  IObservableString
 } from './observablestring';
 
 import {
@@ -33,6 +33,12 @@ import {
   IObservableMap
 } from './observablemap';
 
+import {
+  ShareString
+} from './sharestring';
+
+declare let require: any;
+let sharedb = require('sharedb/lib/client');
 
 /**
  * String type annotations for Observable objects that can be
@@ -383,6 +389,12 @@ class ModelDB implements IModelDB {
       this._db = new ObservableMap<IObservable>();
       this._toDispose = true;
     }
+    let socket = new WebSocket('ws://localhost:8080');
+    let connection = new sharedb.Connection(socket);
+    this._doc = connection.get('examples', 'textarea');
+    this._doc.subscribe( () => {
+      this._connected.resolve(void 0);
+    });
   }
 
   /**
@@ -417,7 +429,9 @@ class ModelDB implements IModelDB {
    * to its backend. For the in-memory ModelDB it
    * is immediately resolved.
    */
-  readonly connected: Promise<void> = Promise.resolve(void 0);
+  get connected(): Promise<void> {
+    return this._connected.promise;
+  }
 
   /**
    * Get a value for a path.
@@ -449,7 +463,7 @@ class ModelDB implements IModelDB {
    * @returns the string that was created.
    */
   createString(path: string): IObservableString {
-    let str = new ObservableString();
+    let str = new ShareString(this._doc, path);
     this._disposables.add(str);
     this.set(path, str);
     return str;
@@ -593,6 +607,8 @@ class ModelDB implements IModelDB {
   private _toDispose = false;
   private _isDisposed = false;
   private _disposables = new DisposableSet();
+  private _connected = new PromiseDelegate<void>();
+  private _doc: any;
 }
 
 /**

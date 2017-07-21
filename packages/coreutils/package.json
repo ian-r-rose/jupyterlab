@@ -21,6 +21,7 @@
     "minimist": "^1.2.0",
     "moment": "^2.17.1",
     "path-posix": "^1.0.0",
+    "sharedb": "^1.0.0-beta.7",
     "url-parse": "^1.1.8"
   },
   "devDependencies": {
