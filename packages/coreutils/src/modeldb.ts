@@ -463,7 +463,7 @@ class ModelDB implements IModelDB {
    * @returns the string that was created.
    */
   createString(path: string): IObservableString {
-    let str = new ShareString(this._doc, path);
+    let str = new ShareString(this._doc, path.split('.'));
     this._disposables.add(str);
     this.set(path, str);
     return str;

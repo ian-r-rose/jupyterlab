@@ -19,9 +19,17 @@ class ShareString implements IObservableString {
   /**
    * Construct a new observable string.
    */
-  constructor(shareDoc: any, path: string) {
+  constructor(shareDoc: any, path: Array<string | number>) {
     this._shareDoc = shareDoc;
     this._shareDoc.on('op', this._onOp.bind(this));
+    this._shareDoc.on('load', () => {
+      this._changed.emit({
+        type: 'set',
+        start: 0,
+        end: this.text.length,
+        value: this.text
+      });
+    });
     this._path = path;
   }
 
@@ -49,7 +57,7 @@ class ShareString implements IObservableString {
     if (this._shareDoc.connection.state === 'connecting') {
       return;
     }
-    this._shareDoc.submitOp({p: [this._path], oi: value});
+    this._shareDoc.submitOp({p: this._path, oi: value});
   }
 
   /**
@@ -57,7 +65,11 @@ class ShareString implements IObservableString {
    */
   get text(): string {
     if (this._shareDoc.data) {
-      return this._shareDoc.data['value'];
+      let current = this._shareDoc.data;
+      for (let component of this._path) {
+        current = current[component];
+      }
+      return current;
     } else {
       return '';
     }
@@ -74,7 +86,10 @@ class ShareString implements IObservableString {
     if (this._shareDoc.connection.state === 'connecting') {
       return;
     }
-    this._shareDoc.submitOp({p: [this._path, index], si: text});
+    this._shareDoc.submitOp({
+      p: [...this._path,index],
+      si: text
+    });
   }
 
   /**
@@ -88,7 +103,10 @@ class ShareString implements IObservableString {
     if (this._shareDoc.connection.state === 'connecting') {
       return;
     }
-    this._shareDoc.submitOp({p: [this._path, start], sd: this.text.slice(start,end)});
+    this._shareDoc.submitOp({
+      p: [...this._path, start],
+      sd: this.text.slice(start,end)
+    });
   }
 
   /**
@@ -112,22 +130,30 @@ class ShareString implements IObservableString {
   }
 
   private _onOp(ops: any, isLocal: boolean) {
+    if (ops.length === 0 || ops.length > 1) {
+      throw Error('Unexpected number of ops');
+    }
+    let op = ops[0];
+    if (!isSubpath(this._path, op.p)) {
+      return;
+    }
+
     for (let op of ops) {
-      if (op['oi']) { // Set case
+      if (op['oi']) { // Set case.
         this._changed.emit({
           type: 'set',
           start: 0,
           end: op['oi'].length,
           value: op['oi']
         });
-      } else if (op['si']) {
+      } else if (op['si']) { // Insert case.
         this._changed.emit({
           type: 'insert',
           start: op['p'][1],
           end: op['p'][1] + op['si'].length,
           value: op['si']
         });
-      } else if (op['sd']) {
+      } else if (op['sd']) { //Delete case.
         this._changed.emit({
           type: 'remove',
           start: op['p'][1],
@@ -140,5 +166,17 @@ class ShareString implements IObservableString {
 
   private _changed = new Signal<this, IObservableString.IChangedArgs>(this);
   private _shareDoc: any;
-  private _path: string;
+  private _path: any[];
+}
+
+function isSubpath(subpath: Array<number | string>, path: Array<number | string>): boolean {
+  if (subpath.length > path.length) {
+    return false;
+  }
+  for (let i = 0; i < subpath.length; ++i) {
+    if (subpath[i] !== path[i]) {
+      return false;
+    }
+  }
+  return true;
 }
