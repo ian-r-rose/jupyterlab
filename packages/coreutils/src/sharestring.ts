@@ -88,7 +88,6 @@ class ShareString implements IObservableString {
     if (this._shareDoc.connection.state === 'connecting') {
       return;
     }
-    console.log(this.text.slice(start,end));
     this._shareDoc.submitOp({p: [this._path, start], sd: this.text.slice(start,end)});
   }
 
@@ -125,14 +124,14 @@ class ShareString implements IObservableString {
         this._changed.emit({
           type: 'insert',
           start: op['p'][1],
-          end: op['si'].length,
+          end: op['p'][1] + op['si'].length,
           value: op['si']
         });
       } else if (op['sd']) {
         this._changed.emit({
           type: 'remove',
           start: op['p'][1],
-          end: op['sd'].length,
+          end: op['p'][1] + op['sd'].length,
           value: op['sd']
         });
       }
