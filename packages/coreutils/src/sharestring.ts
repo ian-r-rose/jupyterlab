@@ -151,31 +151,30 @@ class ShareString implements IObservableString {
     if (!isSubpath(this._path, op.p)) {
       return;
     }
+    console.log(this._path, op.p);
 
-    for (let op of ops) {
-      if (op['oi']) { // Set case.
-        this._changed.emit({
-          type: 'set',
-          start: 0,
-          end: op['oi'].length,
-          value: op['oi']
-        });
-      } else if (op['si']) { // Insert case.
-        this._changed.emit({
-          type: 'insert',
-          start: op['p'][1],
-          end: op['p'][1] + op['si'].length,
-          value: op['si']
-        });
-      } else if (op['sd']) { //Delete case.
-        this._changed.emit({
-          type: 'remove',
-          start: op['p'][1],
-          end: op['p'][1] + op['sd'].length,
-          value: op['sd']
-        });
-      }
-    } 
+    if (op['oi']) { // Set case.
+      this._changed.emit({
+        type: 'set',
+        start: 0,
+        end: op['oi'].length,
+        value: op['oi']
+      });
+    } else if (op['si']) { // Insert case.
+      this._changed.emit({
+        type: 'insert',
+        start: op['p'][1],
+        end: op['p'][1] + op['si'].length,
+        value: op['si']
+      });
+    } else if (op['sd']) { //Delete case.
+      this._changed.emit({
+        type: 'remove',
+        start: op['p'][1],
+        end: op['p'][1] + op['sd'].length,
+        value: op['sd']
+      });
+    }
   }
 
   private _changed = new Signal<this, IObservableString.IChangedArgs>(this);
