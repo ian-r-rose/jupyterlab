@@ -21,16 +21,28 @@ class ShareString implements IObservableString {
    */
   constructor(shareDoc: any, path: Array<string | number>) {
     this._shareDoc = shareDoc;
+    this._path = path;
     this._shareDoc.on('op', this._onOp.bind(this));
     this._shareDoc.on('load', () => {
-      this._changed.emit({
-        type: 'set',
-        start: 0,
-        end: this.text.length,
-        value: this.text
-      });
+      let pathExists = true;
+      let current = this._shareDoc.data;
+      for (let component of this._path) {
+        if (!current[component]) {
+          pathExists = false;
+          break;
+        }
+      }
+      if (pathExists) {
+        this._changed.emit({
+          type: 'set',
+          start: 0,
+          end: this.text.length,
+          value: this.text
+        });
+      } else {
+        this._shareDoc.submitOp({p: this._path, oi: ''});
+      }
     });
-    this._path = path;
   }
 
   /**
@@ -130,7 +142,9 @@ class ShareString implements IObservableString {
   }
 
   private _onOp(ops: any, isLocal: boolean) {
-    if (ops.length === 0 || ops.length > 1) {
+    if (ops.length === 0) {
+      return;
+    } else if (ops.length > 1) {
       throw Error('Unexpected number of ops');
     }
     let op = ops[0];
