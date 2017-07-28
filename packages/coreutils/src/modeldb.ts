@@ -463,7 +463,7 @@ class ModelDB implements IModelDB {
    * @returns the string that was created.
    */
   createString(path: string): IObservableString {
-    let str = new ShareString(this._doc, path.split('.'));
+    let str = new ShareString(this._doc, this.fullPath(path).split('.'));
     this._disposables.add(str);
     this.set(path, str);
     return str;
@@ -590,6 +590,21 @@ class ModelDB implements IModelDB {
       this._db.dispose();
     }
     this._disposables.dispose();
+  }
+
+  /**
+   * Compute the fully resolved path for a path argument.
+   *
+   * @param path: a path for the current view on the model.
+   *
+   * @returns a fully resolved path on the base model database.
+   */
+  fullPath(path: string): string {
+    if (! (this._db as any).type) {
+      return (this._db as ModelDB).fullPath(this._basePath + '.' + path);
+    } else {
+      return path;
+    }
   }
 
   /**

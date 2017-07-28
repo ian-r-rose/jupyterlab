@@ -24,6 +24,7 @@ class ShareString implements IObservableString {
     this._path = path;
     this._shareDoc.on('op', this._onOp.bind(this));
     this._shareDoc.on('load', () => {
+      this._preparePath(this._path);
       let pathExists = true;
       let current = this._shareDoc.data;
       for (let component of this._path) {
@@ -31,6 +32,7 @@ class ShareString implements IObservableString {
           pathExists = false;
           break;
         }
+        current = current[component];
       }
       if (pathExists) {
         this._changed.emit({
@@ -151,7 +153,6 @@ class ShareString implements IObservableString {
     if (!isSubpath(this._path, op.p)) {
       return;
     }
-    console.log(this._path, op.p);
 
     if (op['oi']) { // Set case.
       this._changed.emit({
@@ -174,6 +175,19 @@ class ShareString implements IObservableString {
         end: op['p'][1] + op['sd'].length,
         value: op['sd']
       });
+    }
+  }
+
+  private _preparePath(path: Array<number | string>): void {
+    let current = this._shareDoc.data;
+    let currentPath = [];
+    for (let i = 0; i < this._path.length - 1; ++i) {
+      let component = this._path[i];
+      currentPath.push(component);
+      if (!current[component]) {
+        this._shareDoc.submitOp({p: currentPath, oi: {}});
+      }
+      current = current[component];
     }
   }
 
