@@ -9,18 +9,16 @@
 // Other minor modifications are also due to StackExchange and are used with
 // permission.
 
+import {
+  renderToString
+} from 'katex';
+
 const inline = '$'; // the inline math delimiter
 
 // MATHSPLIT contains the pattern for math delimiters and special symbols
 // needed for searching for math in the text input.
 const MATHSPLIT = /(\$\$?|\\(?:begin|end)\{[a-z]*\*?\}|\\[{}$]|[{}]|(?:\n\s*)+|@@\d+@@|\\\\(?:\(|\)|\[|\]))/i;
 
-// A module-level initialization flag.
-let initialized = false;
-
-
-// Stub for window MathJax.
-declare var MathJax: any;
 
 /**
  *  Break up the text into its component parts and search
@@ -37,11 +35,6 @@ function removeMath(text: string): { text: string, math: string[] } {
   let last: number | null = null;
   let braces: number = 0;
   let deTilde: (text: string) => string;
-
-  if (!initialized) {
-    init();
-    initialized = true;
-  }
 
   // Except for extreme edge cases, this should catch precisely those pieces of the markdown
   // source that will later be turned into code spans. While MathJax will not TeXify code spans,
@@ -144,10 +137,10 @@ function replaceMath(text: string, math: string[]): string {
     let group = math[n];
     if (group.substr(0, 3) === "\\\\\(" &&
         group.substr(group.length - 3) === "\\\\\)") {
-      group = "\\\(" + group.substring(3, group.length - 3) + "\\\)";
+      group = renderToString(group.substring(3, group.length - 3));
     } else if (group.substr(0, 3) === "\\\\\[" &&
                group.substr(group.length - 3) === "\\\\\]") {
-      group = "\\\[" + group.substring(3, group.length - 3) + "\\\]";
+      group = renderToString(group.substring(3, group.length - 3));;
     }
     return group;
   };
@@ -157,56 +150,10 @@ function replaceMath(text: string, math: string[]): string {
 };
 
 
-/**
- * Typeset the math in a node.
- */
 export
-function typeset(node: HTMLElement): void {
-  if (!initialized) {
-    init();
-    initialized = true;
-  }
-  if ((window as any).MathJax) {
-    MathJax.Hub.Queue(
-      ['Typeset', MathJax.Hub, node,
-      ['resetEquationNumbers', MathJax.InputJax.TeX]]
-    );
-  }
+function typeset(element: HTMLElement): void {
+  return;
 }
-
-
-/**
- * Initialize latex handling.
- */
-function init() {
-  if (!(window as any).MathJax) {
-    return;
-  }
-  MathJax.Hub.Config({
-    tex2jax: {
-      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
-      displayMath: [ ['$$', '$$'], ['\\[', '\\]'] ],
-      processEscapes: true,
-      processEnvironments: true
-    },
-    // Center justify equations in code and markdown cells. Elsewhere
-    // we use CSS to left justify single line equations in code cells.
-    displayAlign: 'center',
-    CommonHTML: {
-       linebreaks: { automatic: true }
-     },
-    'HTML-CSS': {
-        availableFonts: [],
-        imageFont: null,
-        preferredFont: null,
-        webFont: 'STIX-Web',
-        styles: {'.MathJax_Display': {'margin': 0}},
-        linebreaks: { automatic: true }
-    },
-  });
-  MathJax.Hub.Configured();
-}
-
 
 /**
  * Process math blocks.

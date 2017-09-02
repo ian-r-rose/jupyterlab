@@ -287,7 +287,7 @@ export
 function renderMarkdown(options: renderMarkdown.IRenderOptions): Promise<void> {
   // Unpack the options.
   let {
-    host, source, trusted, sanitizer, resolver, linkHandler, shouldTypeset
+    host, source, trusted, sanitizer, resolver, linkHandler
   } = options;
 
   // Clear the content if there is no source.
@@ -343,7 +343,7 @@ function renderMarkdown(options: renderMarkdown.IRenderOptions): Promise<void> {
 
     // Return the rendered promise.
     return promise;
-  }).then(() => { if (shouldTypeset) { typeset(host); } });
+  });
 }
 
 
