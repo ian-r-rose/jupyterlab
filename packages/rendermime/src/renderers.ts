@@ -301,13 +301,13 @@ function renderMarkdown(options: renderMarkdown.IRenderOptions): Promise<void> {
 
   // Render the markdown and handle sanitization.
   return Private.renderMarked(parts['text']).then(content => {
-    // Restore the math content in the rendered markdown.
-    content = replaceMath(content, parts['math']);
-
     // Santize the content it is not trusted.
     if (!trusted) {
       content = sanitizer.sanitize(content);
     }
+
+    // Restore the math content in the rendered markdown.
+    content = replaceMath(content, parts['math']);
 
     // Set the inner HTML of the host.
     host.innerHTML = content;
