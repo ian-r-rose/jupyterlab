@@ -150,6 +150,7 @@ class FileBrowserModel implements IDisposable {
     clearTimeout(this._timeoutId);
     this._sessions.length = 0;
     this._items.length = 0;
+    this._state.remove(this._key);
     Signal.clearData(this);
   }
 
