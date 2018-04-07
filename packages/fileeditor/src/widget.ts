@@ -52,7 +52,8 @@ class FileEditorCodeWrapper extends CodeEditorWrapper {
   constructor(options: FileEditor.IOptions) {
     super({
       factory: options.factory,
-      model: options.context.model
+      model: options.context.model,
+      resolver: options.context.urlResolver,
     });
 
     const context = this._context = options.context;
