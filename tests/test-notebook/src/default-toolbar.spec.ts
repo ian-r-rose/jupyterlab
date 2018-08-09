@@ -146,21 +146,29 @@ describe('@jupyterlab/notebook', () => {
         widget.select(mdCell);
 
         Widget.attach(button, document.body);
+        console.log('Zero');
         await context.ready;
+        console.log('Zeroo');
         await context.session.ready;
+        console.log('Zerooo');
         await context.session.kernel.ready;
+        console.log('One');
         const p = new PromiseDelegate();
         context.session.statusChanged.connect((sender, status) => {
+          console.log('Status: ' + status);
           // Find the right status idle message
           if (status === 'idle' && codeCell.model.outputs.length > 0) {
             expect(mdCell.rendered).to.equal(true);
             expect(widget.activeCellIndex).to.equal(2);
             button.dispose();
+            console.log('two');
             p.resolve(0);
           }
         });
         button.node.click();
+        console.log('Three');
         await p.promise;
+        console.log('Four');
       });
 
       it("should have the `'jp-RunIcon'` class", () => {
