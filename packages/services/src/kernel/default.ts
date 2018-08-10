@@ -1023,8 +1023,10 @@ export class DefaultKernel implements Kernel.IKernel {
     this._updateStatus('connected');
     // Get the kernel info, signaling that the kernel is ready.
     // TODO: requestKernelInfo shouldn't make a request, but should return cached info?
+    console.error('Requesting info!');
     this.requestKernelInfo()
       .then(() => {
+        console.error('Got info!');
         this._connectionPromise.resolve(void 0);
       })
       .catch(err => {
