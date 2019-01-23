@@ -1,1 +1,3 @@
-exec "$@ --config=binder/config.py"
+#!/bin/bash
+
+exec "`echo $@ | sed 's/jupyter-notebook/jupyter-lab'` --dev-mode"
