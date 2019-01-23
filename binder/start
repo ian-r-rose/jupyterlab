@@ -1,3 +1,5 @@
 #!/bin/bash
 
-exec "`echo $@ | sed 's/jupyter-notebook/jupyter-lab'` --dev-mode"
+CMD = `echo $@ | sed 's/jupyter-notebook/jupyter-lab/g'` --dev-mode
+echo $CMD
+exec $CMD
