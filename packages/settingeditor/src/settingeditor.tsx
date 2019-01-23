@@ -448,7 +448,7 @@ export namespace SettingEditor {
      */
     plugin: string;
 
-    editor: 'raw' | 'table';
+    editor: 'raw' | 'form';
 
     sizes: number[];
   }
@@ -506,7 +506,7 @@ namespace Private {
 
     saved.container = {
       editor:
-        container.editor === 'raw' || container.editor === 'table'
+        container.editor === 'raw' || container.editor === 'form'
           ? container.editor
           : DEFAULT_LAYOUT.container.editor,
       plugin:

@@ -50,10 +50,10 @@ export class PluginList extends Widget {
   /**
    * The editor type currently selected.
    */
-  get editor(): 'raw' | 'table' {
+  get editor(): 'raw' | 'form' {
     return this._editor;
   }
-  set editor(editor: 'raw' | 'table') {
+  set editor(editor: 'raw' | 'form') {
     if (this._editor === editor) {
       return;
     }
@@ -148,7 +148,7 @@ export class PluginList extends Widget {
     const editor = target.getAttribute('data-editor');
 
     if (editor) {
-      this._editor = editor as 'raw' | 'table';
+      this._editor = editor as 'raw' | 'form';
       this._changed.emit(undefined);
       this.update();
       return;
@@ -179,7 +179,7 @@ export class PluginList extends Widget {
 
   private _changed = new Signal<this, void>(this);
   private _confirm: () => Promise<void>;
-  private _editor: 'raw' | 'table' = 'raw';
+  private _editor: 'raw' | 'form' = 'raw';
   private _scrollTop = 0;
   private _selection = '';
 }
@@ -267,7 +267,7 @@ namespace Private {
    */
   export function populateList(
     registry: ISettingRegistry,
-    type: 'raw' | 'table',
+    type: 'raw' | 'form',
     selection: string,
     node: HTMLElement
   ): void {
@@ -306,8 +306,8 @@ namespace Private {
           <button data-editor="raw" disabled={type === 'raw'}>
             Raw View
           </button>
-          <button data-editor="table" disabled={type === 'table'}>
-            Table View
+          <button data-editor="table" disabled={type === 'form'}>
+            Form View
           </button>
         </div>
         <ul>{items}</ul>

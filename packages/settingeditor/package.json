@@ -41,11 +41,13 @@
     "@phosphor/signaling": "^1.2.2",
     "@phosphor/widgets": "^1.6.0",
     "react": "~16.4.2",
-    "react-dom": "~16.4.2"
+    "react-dom": "~16.4.2",
+    "react-jsonschema-form": "^1.2.0"
   },
   "devDependencies": {
     "@types/react": "~16.4.13",
     "@types/react-dom": "~16.0.7",
+    "@types/react-jsonschema-form": "^1.0.13",
     "rimraf": "~2.6.2",
     "typedoc": "~0.12.0",
     "typescript": "~3.1.1"
