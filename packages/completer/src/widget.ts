@@ -245,9 +245,10 @@ export class Completer extends Widget {
     // We don't test the filtered `items`, as that
     // is too aggressive of completer behavior, it can
     // lead to double typing of an option.
-    const options = toArray(model.options());
-    if (options.length === 1) {
-      this._selected.emit(options[0]);
+    const options = model.options();
+    const first: string = options.next();
+    if (first && !options.next()) {
+      this._selected.emit(first);
       this.reset();
       return;
     }
